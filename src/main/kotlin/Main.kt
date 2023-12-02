@@ -25,7 +25,7 @@ fun main() {
         0   -> println(message())
         1   -> println(Day1.count())
         2   -> println(Day1.countV2())
-//        3   -> println(Day2.count())
+        3   -> println(Day2.count())
 //        4   -> println(Day2.countV2())
 //        5   -> println(Day3.count())l
 //        6   -> println(Day3.countV2())
@@ -79,7 +79,8 @@ fun main() {
 
 fun message(): String {
     val list = listOf(
-        Day1.VALUE
+        Day1.VALUE,
+        Day2.VALUE
     )
     for (i in list.indices) {
         println("%4s".format(list[i]))
