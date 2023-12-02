@@ -4,6 +4,7 @@ import java.util.Scanner
 import kotlin.io.path.Path
 
 object Day1 {
+    const val VALUE = 1045
     private const val MIN_DIGIT = 1
     private const val MAX_DIGIT = 9
     private const val EMPTY_DIGIT = -1
