@@ -100,13 +100,9 @@ object Day2 {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
-        val lineList = LinkedList<List<String>>()
+        var powerSum = 0
         while (scanner.hasNext()) {
             val line = scanner.nextLine().split(GAME_DELIMITER, SET_DELIMITER)
-            lineList.add(line)
-        }
-        var powerSum = 0
-        for (line in lineList) {
             powerSum += checkGameV2(line)
         }
         return powerSum
@@ -139,17 +135,20 @@ object Day2 {
         checkSet: Map<String, Int>,
         gameResult: MutableMap<String, Int>
     ) {
-        for (color in gameResult.keys) {
+        for (cube in gameResult.entries) {
+            val color = cube.key
             val checkNumber = checkSet.getOrDefault(color, DEFAULT_NUMBER)
-            if (checkNumber > gameResult.getOrDefault(color, DEFAULT_NUMBER))
+            if (checkNumber > cube.value)
                 gameResult[color] = checkNumber
         }
     }
 
     private fun multiply(gameResult: Map<String, Int>): Int {
         var multi = 1
-        for (color in gameResult.keys) {
-            multi *= gameResult.getOrDefault(color, 0)
+        for (cube in gameResult.entries) {
+            val color = cube.key
+            if (color != DEFAULT_COLOR)
+                multi *= cube.value
         }
         println(multi)
         return multi
