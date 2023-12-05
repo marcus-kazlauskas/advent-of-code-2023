@@ -51,6 +51,7 @@ object Day3 {
         return count(path)
     }
 
+    // TODO
     fun count(path: String): Int {
         val input = Path(path)
         val file = File(input.toUri())
@@ -62,6 +63,7 @@ object Day3 {
             searchWindow.nextLine(scanner)
         }
         searchWindow.lastLine(scanner)
+        println("Unfinished")
         return 0
     }
 
