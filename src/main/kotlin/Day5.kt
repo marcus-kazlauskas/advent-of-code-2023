@@ -44,6 +44,28 @@ object Day5 {
                 }
             }
         }
+
+        fun getSource(inputDestination: Long): Long {
+            val maxLowerKey = mappingList.stream()
+                .filter { x ->
+                    x[DESTINATION_INDEX] <= inputDestination
+                }.collect(Collectors.toList())
+                .maxByOrNull { x ->
+                    x[DESTINATION_INDEX]
+                }
+            return if(maxLowerKey.isNullOrEmpty()) {
+                inputDestination
+            } else {
+                val startRange = maxLowerKey[DESTINATION_INDEX]
+                val endRange = startRange + maxLowerKey[RANGE_INDEX]
+                if (inputDestination < endRange) {
+                    val delta = inputDestination - startRange
+                    maxLowerKey[SOURCE_INDEX] + delta
+                } else {
+                    inputDestination
+                }
+            }
+        }
     }
 
     fun count(): Long {
@@ -64,7 +86,7 @@ object Day5 {
         for (seed in seeds) {
             locations.add(getLocation(superMapsList, seed))
         }
-        return locations.minBy { x -> x }
+        return locations.min()
     }
 
     private fun readSeedNumbers(scanner: Scanner): LinkedList<Long> {
@@ -72,7 +94,7 @@ object Day5 {
         val numbers = LinkedList<Long>()
         for (seed in line) {
             if (seed != SEEDS_HEADER) {
-                numbers.add(seed.toLong(10))
+                numbers.add(seed.toLong())
             }
         }
         scanner.nextLine()
@@ -102,5 +124,61 @@ object Day5 {
         }
         println(link)
         return link
+    }
+
+    fun countV2(): Long {
+        val path = MAIN_INPUT_PATH.format("Day5")
+        return countV2(path)
+    }
+
+    fun countV2(path: String): Long {
+        val input = Path(path)
+        val file = File(input.toUri())
+        val scanner = Scanner(file)
+        val superMapsList = LinkedList<SuperMap>()
+        val seeds = readSeedNumbers(scanner)
+        while (scanner.hasNext()) {
+            readBlock(scanner, superMapsList)
+        }
+        val seedPairs = onesToPairs(seeds)
+        for (i in 0 until Int.MAX_VALUE) {
+            val location = i.toLong()
+            val seed = getSeed(superMapsList, location)
+            if (checkSeed(seedPairs, seed)) return location
+        }
+        return -1L
+    }
+
+    private fun onesToPairs(ones: LinkedList<Long>): LinkedList<Pair<Long, Long>> {
+        val pairs = LinkedList<Pair<Long, Long>>()
+        while (containsPairs(ones)) {
+            val start = ones.poll()
+            val range = ones.poll()
+            val pair = Pair(start, range)
+            pairs.add(pair)
+        }
+        return pairs
+    }
+
+    private fun containsPairs(ones: LinkedList<Long>): Boolean {
+        return ones.size > 1
+    }
+
+    private fun getSeed(superMapsList: LinkedList<SuperMap>, location: Long): Long {
+        var link = location
+        for (superMap in superMapsList.reversed()) {
+            link = superMap.getSource(link)
+        }
+        println("$link <- .. <- $location")
+        return link
+    }
+
+    private fun checkSeed(seedPairs: LinkedList<Pair<Long, Long>>, seedToCheck: Long): Boolean {
+        for (seedPair in seedPairs) {
+            val seed = seedPair.first
+            val range = seedPair.second
+            if (seedToCheck in seed until (seed + range)) return true
+        }
+        return false
     }
 }
