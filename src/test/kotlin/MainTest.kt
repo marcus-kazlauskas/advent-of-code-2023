@@ -65,4 +65,12 @@ class MainTest {
             Day5.countV2(TEST_INPUT_PATH.format("Day5"))
         )
     }
+
+    @Test
+    fun testDay6Count() {
+        assertEquals(
+            288,
+            Day6.count(TEST_INPUT_PATH.format("Day6"))
+        )
+    }
 }
