@@ -6,7 +6,7 @@ object Day4 {
     const val VALUE = 1107
 
     fun count(): Int {
-        val path = MAIN_INPUT_PATH.format("Day2")
+        val path = MAIN_INPUT_PATH.format("Day4")
         return count(path)
     }
 

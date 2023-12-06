@@ -47,7 +47,7 @@ object Day3 {
     }
 
     fun count(): Int {
-        val path = MAIN_INPUT_PATH.format("Day2")
+        val path = MAIN_INPUT_PATH.format("Day3")
         return count(path)
     }
 
