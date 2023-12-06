@@ -13,6 +13,7 @@ object Day5 {
 
     class SuperMap() {
         private val mappingList = LinkedList<Array<Long>>()
+        private var sorted = false
 
         fun add(newMapValues: List<String>) {
             val array = arrayOf(
@@ -21,6 +22,7 @@ object Day5 {
                 newMapValues[RANGE_INDEX].toLong()
             )
             mappingList.add(array)
+            sorted = false
         }
 
         fun getDestination(inputSource: Long): Long {
@@ -45,15 +47,17 @@ object Day5 {
             }
         }
 
+        /*  c отсортированным массивом работает в четыре раза быстрее
+            (сравнение происходило при выключенной печати) */
         fun getSource(inputDestination: Long): Long {
-            val maxLowerKey = mappingList.stream()
-                .filter { x ->
-                    x[DESTINATION_INDEX] <= inputDestination
-                }.collect(Collectors.toList())
-                .maxByOrNull { x ->
-                    x[DESTINATION_INDEX]
-                }
-            return if(maxLowerKey.isNullOrEmpty()) {
+            if (!sorted) sortByDestination()
+            var maxLowerKey = emptyArray<Long>()
+            for (mapValue in mappingList) {
+                if (mapValue[DESTINATION_INDEX] <= inputDestination) {
+                    maxLowerKey = mapValue
+                } else break
+            }
+            return if(maxLowerKey.isEmpty()) {
                 inputDestination
             } else {
                 val startRange = maxLowerKey[DESTINATION_INDEX]
@@ -65,6 +69,13 @@ object Day5 {
                     inputDestination
                 }
             }
+        }
+
+        private fun sortByDestination() {
+            mappingList.sortBy { x ->
+                x[DESTINATION_INDEX]
+            }
+            sorted = true
         }
     }
 
@@ -169,7 +180,8 @@ object Day5 {
         for (superMap in superMapsList.reversed()) {
             link = superMap.getSource(link)
         }
-        println("$link <- .. <- $location")
+        // без печати работает в четыре раза быстрее!
+//        println("$link <- .. <- $location")
         return link
     }
 
