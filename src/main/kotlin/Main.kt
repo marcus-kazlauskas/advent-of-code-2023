@@ -43,7 +43,7 @@ fun main() {
 //        18  -> println(Day9.countV2())
         19  -> println(Day10.count())
 //        20  -> println(Day10.countV2())
-//        21  -> println(Day11.count())
+        21  -> println(Day11.count())
 //        22  -> println(Day11.countV2())
 //        23  -> println(Day12.count())
 //        24  -> println(Day12.countV2())
@@ -88,7 +88,8 @@ fun message(): String {
         Day7.VALUE,
         Day8.VALUE,
         Day9.VALUE,
-        Day10.VALUE
+        Day10.VALUE,
+        Day11.VALUE
     )
     for (i in list.indices) {
         println("%4s".format(list[i]))
