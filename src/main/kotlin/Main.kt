@@ -44,7 +44,7 @@ fun main() {
         19  -> println(Day10.count())
 //        20  -> println(Day10.countV2())
         21  -> println(Day11.count())
-//        22  -> println(Day11.countV2())
+        22  -> println(Day11.countV2())
 //        23  -> println(Day12.count())
 //        24  -> println(Day12.countV2())
 //        25  -> println(Day13.count())

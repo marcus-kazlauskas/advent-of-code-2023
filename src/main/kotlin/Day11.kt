@@ -2,15 +2,17 @@ import java.io.File
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 object Day11 {
     const val VALUE = 1088
     const val EMPTY_SPACE = '.'
     const val GALAXY = '#'
 
-    class Universe {
-        private val universe = LinkedList<LinkedList<Char>>()
-        private val galaxies = LinkedList<Pair<Int, Int>>()
+    open class Universe {
+        protected val universe = LinkedList<LinkedList<Char>>()
+        protected val galaxies = LinkedList<Pair<Int, Int>>()
 
         fun save(scanner: Scanner) {
             while (scanner.hasNext()) {
@@ -121,5 +123,73 @@ object Day11 {
 //        universe.print()
         universe.findPoints()
         return universe.sumOfDistances()
+    }
+
+    class UniverseV2 : Universe() {
+        fun sumOfDistancesV2(multiply: Int): Long {
+            var sum = 0L
+            for (i in galaxies.indices) {
+                var j = i + 1
+                while (j < galaxies.size) {
+                    sum += distanceV2(galaxies[i], galaxies[j], multiply)
+                    j++
+                }
+            }
+            return sum
+        }
+
+        private fun distanceV2(p0: Pair<Int, Int>, p1: Pair<Int, Int>, multiply: Int): Int {
+            val xMin = min(p0.first, p1.first)
+            val xMax = max(p0.first, p1.first)
+            val yMin = min(p0.second, p1.second)
+            val yMax = max(p0.second, p1.second)
+            var distance = 0
+            for (x in xMin until xMax) {
+                distance += if (emptyColumn(x)) multiply
+                else 1
+            }
+            for (y in yMin until yMax) {
+                distance += if (emptyRow(y)) multiply
+                else 1
+            }
+            return distance
+        }
+
+        private fun emptyColumn(x: Int): Boolean {
+            var empty = true
+            for (y in universe.indices) {
+                if (universe[y][x] == GALAXY) {
+                    empty = false
+                    break
+                }
+            }
+            return empty
+        }
+
+        private fun emptyRow(y: Int): Boolean {
+            var empty = true
+            for (x in universe[y]) {
+                if (x == GALAXY) {
+                    empty = false
+                    break
+                }
+            }
+            return empty
+        }
+    }
+
+    fun countV2(): Long {
+        val path = MAIN_INPUT_PATH.format("Day11")
+        return countV2(path, 1000000)
+    }
+
+    fun countV2(path: String, multiply: Int): Long {
+        val input = Path(path)
+        val file = File(input.toUri())
+        val universe = UniverseV2()
+        val scanner = Scanner(file)
+        universe.save(scanner)
+        universe.findPoints()
+        return universe.sumOfDistancesV2(multiply)
     }
 }

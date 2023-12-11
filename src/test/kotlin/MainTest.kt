@@ -113,4 +113,20 @@ class MainTest {
             Day11.count(TEST_INPUT_PATH.format("Day11"))
         )
     }
+
+    @Test
+    fun testDay11CountV2_10() {
+        assertEquals(
+            1030L,
+            Day11.countV2(TEST_INPUT_PATH.format("Day11"), 10)
+        )
+    }
+
+    @Test
+    fun testDay11CountV2_100() {
+        assertEquals(
+            8410L,
+            Day11.countV2(TEST_INPUT_PATH.format("Day11"), 100)
+        )
+    }
 }
