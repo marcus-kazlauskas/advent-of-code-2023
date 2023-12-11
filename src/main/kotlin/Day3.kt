@@ -5,9 +5,14 @@ import kotlin.io.path.Path
 object Day3 {
     const val VALUE = 1086
     private const val DEFAULT_SYMBOL = '.'
+    private const val UP_LINE_INDEX = 0
+    private const val CURRENT_LINE_INDEX = 1
+    private const val DOWN_LINE_INDEX = 2
 
     class SearchWindow() {
         private val window = LinkedList<String>()
+        private var stringNumbersInLine = LinkedList<String>()
+        private val partNumbers = LinkedList<Int>()
 
         fun firstLine(scanner: Scanner) {
             val firstLine = scanner.nextLine()
@@ -24,7 +29,7 @@ object Day3 {
             window.add(nextLine)
         }
 
-        fun lastLine(scanner: Scanner) {
+        fun lastLine() {
             val length = window[1].length
             val emptyLine = createEmptyLine(length)
             window.poll()
@@ -35,11 +40,66 @@ object Day3 {
             return CharArray(length){DEFAULT_SYMBOL}.concatToString()
         }
 
-        private fun findPartNumbers(): List<Int> {
-            return emptyList()
+        fun findPartNumbers() {
+            println(window[UP_LINE_INDEX])
+            println(window[CURRENT_LINE_INDEX])
+            println(window[DOWN_LINE_INDEX])
+            val stringNumbers = window[CURRENT_LINE_INDEX].split(Regex("[^0-9]+"))
+            stringNumbersInLine = LinkedList<String>()
+            for (stringNumber in stringNumbers) {
+                val count = count(stringNumber)
+                stringNumbersInLine.add(stringNumber)
+                print(stringNumber)
+                if (isPartNumber(stringNumber, count) && stringNumber != "") {
+                    println(" yes")
+                    val number = stringNumber.toInt()
+                    partNumbers.add(number)
+                } else println(" no")
+            }
         }
 
-        private fun sum(partNumbers: List<Int>): Int {
+        private fun count(stringNumber: String): Int {
+            var i = 0
+            for (numberInLine in stringNumbersInLine) {
+                if (numberInLine == stringNumber) i++
+            }
+            return i
+        }
+
+        private fun isPartNumber(stringNumber: String, count: Int): Boolean {
+            val regex = Regex("[^0-9]?$stringNumber[^0-9]?")
+            var match = regex.find(window[CURRENT_LINE_INDEX])!!
+            var i = 0
+            while (i < count) {
+                match = match.next()!!
+                i++
+            }
+            val range = match.range
+            if (match.value == ".192.") {
+                println()
+                println("stringNumbersInLine = $stringNumbersInLine")
+                println("count = $count")
+                println("match = ${match.value}")
+                println(range)
+            }
+            var check = false
+            for (i in range) {
+                if (charIsSymbol(UP_LINE_INDEX, i)
+                    || charIsSymbol(CURRENT_LINE_INDEX, i)
+                    || charIsSymbol(DOWN_LINE_INDEX, i)) {
+                    check = true
+                    break
+                }
+            }
+            return check
+        }
+
+        private fun charIsSymbol(lineInWindow: Int, i: Int): Boolean {
+            return window[lineInWindow][i] != DEFAULT_SYMBOL
+                    && !window[lineInWindow][i].isDigit()
+        }
+
+        fun sum(): Int {
             var sum = 0
             for (number in partNumbers) sum += number
             return sum
@@ -51,20 +111,21 @@ object Day3 {
         return count(path)
     }
 
-    // TODO
     fun count(path: String): Int {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
         val searchWindow = SearchWindow()
-        val partNumbersSum = 0
         searchWindow.firstLine(scanner)
         while (scanner.hasNext()) {
             searchWindow.nextLine(scanner)
+            searchWindow.findPartNumbers()
+            println()
         }
-        searchWindow.lastLine(scanner)
-        println("Unfinished")
-        return 0
+        searchWindow.lastLine()
+        searchWindow.findPartNumbers()
+        println()
+        return searchWindow.sum()
     }
 
 
