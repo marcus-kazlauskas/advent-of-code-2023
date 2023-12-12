@@ -12,7 +12,7 @@ object Day3 {
     class SearchWindow() {
         private val window = LinkedList<String>()
         private var stringNumbersInLine = LinkedList<String>()
-        private val partNumbers = LinkedList<Int>()
+        private var partNumbersSum = 0
 
         fun firstLine(scanner: Scanner) {
             val firstLine = scanner.nextLine()
@@ -50,10 +50,11 @@ object Day3 {
                 val count = count(stringNumber)
                 stringNumbersInLine.add(stringNumber)
                 print(stringNumber)
-                if (isPartNumber(stringNumber, count) && stringNumber != "") {
-                    println(" yes")
+                if (stringNumber != "" && isPartNumber(stringNumber, count)) {
+                    print(" yes ")
                     val number = stringNumber.toInt()
-                    partNumbers.add(number)
+                    println(number)
+                    partNumbersSum += number
                 } else println(" no")
             }
         }
@@ -69,19 +70,17 @@ object Day3 {
         private fun isPartNumber(stringNumber: String, count: Int): Boolean {
             val regex = Regex("[^0-9]?$stringNumber[^0-9]?")
             var match = regex.find(window[CURRENT_LINE_INDEX])!!
-            var i = 0
-            while (i < count) {
+            for (i in 0 until count) {
                 match = match.next()!!
-                i++
             }
             val range = match.range
-            if (match.value == ".192.") {
-                println()
-                println("stringNumbersInLine = $stringNumbersInLine")
-                println("count = $count")
-                println("match = ${match.value}")
-                println(range)
-            }
+//            if (match.value == ".192.") {
+//                println()
+//                println("stringNumbersInLine = $stringNumbersInLine")
+//                println("count = $count")
+//                println("match = ${match.value}")
+//                println(range)
+//            }
             var check = false
             for (i in range) {
                 if (charIsSymbol(UP_LINE_INDEX, i)
@@ -99,10 +98,8 @@ object Day3 {
                     && !window[lineInWindow][i].isDigit()
         }
 
-        fun sum(): Int {
-            var sum = 0
-            for (number in partNumbers) sum += number
-            return sum
+        fun getPartNumbersSum(): Int {
+            return partNumbersSum
         }
     }
 
@@ -125,7 +122,8 @@ object Day3 {
         searchWindow.lastLine()
         searchWindow.findPartNumbers()
         println()
-        return searchWindow.sum()
+        return searchWindow.getPartNumbersSum()
+        // 531823 wrong
     }
 
 
