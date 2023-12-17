@@ -13,7 +13,7 @@ object Day12 {
     const val UNKNOWN = '?'
 
     class Counter(linesPair: List<String>) {
-        private var row = linesPair[0].toCharArray().toList()
+        private var row = linesPair[0]
         private var groupsOfDamaged = groupsOfDamaged(linesPair[1])
         private val maxCount = maxCount()
         private var validCount = 0L
@@ -67,7 +67,6 @@ object Day12 {
                     assumption.addFirst(c)
                 }
             }
-//            println(assumption)
             return assumption
         }
 
@@ -109,98 +108,113 @@ object Day12 {
         }
 
         fun unfold(n: Int) {
-            val newRow = LinkedList(row)
-            val newGroupsOfDamaged = LinkedList(groupsOfDamaged)
-            for (i in 1 until n) {
-                newRow.add(UNKNOWN)
-                newRow.addAll(row)
+            val newRow = LinkedList<String>()
+            val newGroupsOfDamaged = LinkedList<Int>()
+            for (i in 0 until n) {
+                newRow.add(row)
                 newGroupsOfDamaged.addAll(groupsOfDamaged)
             }
-            row = newRow
+            row = newRow.joinToString("$UNKNOWN")
             groupsOfDamaged = newGroupsOfDamaged
         }
 
         // проблема с #?????.???????#.??? 1,2,1,1,2,2 долго считается
         fun checkV2() {
-            checkV2(0, OPERATIONAL, 0, 0)
+            checkV2(0, OPERATIONAL, 0, 0, minSpace())
         }
 
-        private fun checkV2(pos: Int, prevSymbol: Char, posInGroups: Int, prevCountInGroup: Int) {
+        private fun minSpace(): Int {
+            var minSpace = -1
+            for (g in groupsOfDamaged) {
+                minSpace += g + 1
+            }
+            return minSpace
+        }
+
+        private fun checkV2(pos: Int, prevSymbol: Char, posInGroups: Int, prevCountInGroup: Int, minSpace: Int) {
             val nextPos = pos + 1
-            val maxPos = row.size - 1
-            if (pos <= maxPos) {
-                when (row[pos]) { // when (symbol)
-                    UNKNOWN     -> {
-                        if (prevSymbol == DAMAGED) {
-                            if (isGroupOk(posInGroups, prevCountInGroup)) {
-//                                println(CharArray(pos){ ' ' }.concatToString() + OPERATIONAL)
-                                checkV2(nextPos, OPERATIONAL, posInGroups + 1, 0)
+            val nextPosInGroups = posInGroups + 1
+            val nextMinSpace = minSpace - 1
+            val maxPos = row.length - 1
+            if ((maxPos - pos + 1) >= minSpace) {
+                if (pos <= maxPos) {
+                    when (row[pos]) { // when (symbol)
+                        UNKNOWN -> {
+                            if (prevSymbol == DAMAGED) {
+                                if (isEndGroupOk(posInGroups, prevCountInGroup)) {
+                                    checkV2(nextPos, OPERATIONAL, nextPosInGroups, 0, nextMinSpace)
+                                } else {
+                                    checkV2(nextPos, DAMAGED, posInGroups, prevCountInGroup + 1, nextMinSpace)
+                                }
                             } else {
-//                                println(CharArray(pos){ ' ' }.concatToString() + DAMAGED)
-                                checkV2(nextPos, DAMAGED, posInGroups, prevCountInGroup + 1)
+                                if (isStartGroupOk(pos, posInGroups)) {
+                                    val countInGroup = groupsOfDamaged[posInGroups] // TODO
+                                    checkV2(pos + countInGroup, DAMAGED, posInGroups, countInGroup, minSpace - countInGroup)
+                                }
+                                checkV2(nextPos, OPERATIONAL, posInGroups, 0, minSpace)
                             }
-                        } else {
-//                            println(CharArray(pos){ ' ' }.concatToString() + DAMAGED)
-                            checkV2(nextPos, DAMAGED, posInGroups, 1)
-//                            println(CharArray(pos){ ' ' }.concatToString() + OPERATIONAL)
-                            checkV2(nextPos, OPERATIONAL, posInGroups, 0)
                         }
-                    }
-                    DAMAGED     -> {
-                        if (prevSymbol == DAMAGED) {
-                            if (isGroupOk(posInGroups, prevCountInGroup)) {
-//                                println(CharArray(pos){ ' ' }.concatToString() + " no")
-                                return
+
+                        DAMAGED -> {
+                            if (prevSymbol == DAMAGED) {
+                                if (!isEndGroupOk(posInGroups, prevCountInGroup)) {
+                                    checkV2(nextPos, DAMAGED, posInGroups, prevCountInGroup + 1, nextMinSpace)
+                                }
                             } else {
-//                                println(CharArray(pos){ ' ' }.concatToString() + DAMAGED)
-                                checkV2(nextPos, DAMAGED, posInGroups, prevCountInGroup + 1)
+                                checkV2(nextPos, DAMAGED, posInGroups, 1, nextMinSpace)
                             }
-                        } else {
-//                            println(CharArray(pos){ ' ' }.concatToString() + DAMAGED)
-                            checkV2(nextPos, DAMAGED, posInGroups, 1)
                         }
-                    }
-                    OPERATIONAL -> {
-                        if (prevSymbol == DAMAGED) {
-                            if (isGroupOk(posInGroups, prevCountInGroup)) {
-//                                println(CharArray(pos){ ' ' }.concatToString() + OPERATIONAL)
-                                checkV2(nextPos, OPERATIONAL, posInGroups + 1, 0)
+
+                        OPERATIONAL -> {
+                            if (prevSymbol == DAMAGED) {
+                                if (isEndGroupOk(posInGroups, prevCountInGroup)) {
+                                    checkV2(nextPos, OPERATIONAL, nextPosInGroups, 0, nextMinSpace)
+                                }
                             } else {
-//                                println(CharArray(pos){ ' ' }.concatToString() + " no")
-                                return
+                                checkV2(nextPos, OPERATIONAL, posInGroups, 0, minSpace)
                             }
-                        } else {
-//                            println(CharArray(pos){ ' ' }.concatToString() + OPERATIONAL)
-                            checkV2(nextPos, OPERATIONAL, posInGroups, 0)
                         }
-                    }
-                }
-            } else {
-                if (prevSymbol == DAMAGED) {
-                    if (isTerminalDamagedOk(posInGroups, prevCountInGroup)) {
-//                        println(CharArray(pos){ ' ' }.concatToString() + " yes")
-                        validCount++
-                    } else {
-//                        println(CharArray(pos){ ' ' }.concatToString() + " no")
-                        return
                     }
                 } else {
-                    if (isTerminalOperationalOk(posInGroups)) {
-//                        println(CharArray(pos) { ' ' }.concatToString() + " yes")
-                        validCount++
+                    if (prevSymbol == DAMAGED) {
+                        if (isTerminalDamagedOk(posInGroups, prevCountInGroup)) {
+                            validCount++
+                        }
                     } else {
-//                        println(CharArray(pos){ ' ' }.concatToString() + " no")
-                        return
+                        if (isTerminalOperationalOk(posInGroups)) {
+                            validCount++
+                        }
                     }
                 }
             }
         }
 
-        private fun isGroupOk(posInGroups: Int, prevCountInGroup: Int): Boolean {
+        private fun isEndGroupOk(posInGroups: Int, prevCountInGroup: Int): Boolean {
             return if (posInGroups < groupsOfDamaged.size) {
                 prevCountInGroup == groupsOfDamaged[posInGroups] // prevCountInGroup == countInGroup
             } else {
                 false
+            }
+        }
+
+        private fun isStartGroupOk(pos: Int, posInGroups: Int): Boolean {
+            if (posInGroups < groupsOfDamaged.size) {
+                var delta = 0
+                var symbol = UNKNOWN
+                for (i in pos until row.length) {
+                    symbol = row[i]
+                    if (symbol != UNKNOWN) {
+                        delta = i - pos
+                        break
+                    }
+                }
+                return if (symbol == OPERATIONAL) {
+                    delta >= groupsOfDamaged[posInGroups]
+                } else {
+                    true
+                }
+            } else {
+                return false
             }
         }
 
@@ -229,11 +243,12 @@ object Day12 {
         var sumOfAllPossibleArrangements = 0L
         while (scanner.hasNext()) {
             val linesPair = scanner.nextLine().split(' ')
-//            println(linesPair)
+            println(linesPair)
             val counter = Counter(linesPair)
             counter.check()
             val validCount = counter.getValidCount()
-//            println(validCount)
+            println(validCount)
+            println()
             sumOfAllPossibleArrangements += validCount
         }
         return sumOfAllPossibleArrangements
