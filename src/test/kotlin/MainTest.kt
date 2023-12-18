@@ -212,7 +212,15 @@ class MainTest {
     fun testDay17Count() {
         assertEquals(
             102,
-            Day16.count(TEST_INPUT_PATH.format("Day17"))
+            Day17.count(TEST_INPUT_PATH.format("Day17"))
+        )
+    }
+
+    @Test
+    fun testDay18Count() {
+        assertEquals(
+            62,
+            Day18.count(TEST_INPUT_PATH.format("Day18"))
         )
     }
 }
