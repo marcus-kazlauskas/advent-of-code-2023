@@ -32,7 +32,7 @@ object Day12 {
             this.validCount = 0L
         }
 
-        private fun maxCount(): Int {
+        private fun maxCount(): Long {
             var count = 0
             for (c in row) {
                 if (c == UNKNOWN) count++
@@ -40,9 +40,9 @@ object Day12 {
             return pow(count) - 1
         }
 
-        private fun pow(n: Int): Int {
+        private fun pow(n: Int): Long {
             val x = numberToSymbol.size
-            var power = 1
+            var power = 1L
             for (i in 1..n) {
                 power *= x
             }
@@ -61,19 +61,19 @@ object Day12 {
             }
         }
 
-        private fun checkAssumption(i: Int) {
+        private fun checkAssumption(i: Long) {
             val assumption = createAssumption(i)
             val groups = createGroups(assumption)
             if (compareGroups(groups)) validCount++
         }
 
-        private fun createAssumption(i: Int): List<Char> {
+        private fun createAssumption(i: Long): List<Char> {
             var currentCount = i
             val assumption = LinkedList<Char>()
             for (c in row.reversed()) {
                 if (c == UNKNOWN) {
                     val radix = numberToSymbol.size
-                    val number = currentCount % radix
+                    val number = (currentCount % radix).toInt()
                     val symbol = numberToSymbol[number]
                     assumption.addFirst(symbol)
                     currentCount /= radix
@@ -162,10 +162,9 @@ object Day12 {
         }
 
         private fun groupsOfRows(line: String): List<String> {
-            val groups = line.split(Regex("[$OPERATIONAL]+"))
-            println(line)
-            println(groups)
-            return groups
+            return line.split(Regex("[$OPERATIONAL]+"))
+                .filter { g -> g != "" }
+                .toList()
         }
 
         fun unfold(n: Int) {
@@ -177,65 +176,83 @@ object Day12 {
             }
             row = newRow.joinToString("$UNKNOWN")
             groupsOfRows = groupsOfRows(row)
+            println(groupsOfRows)
             groupsOfDamaged = newGroupsOfDamaged
+            println(groupsOfDamaged)
         }
 
         fun checkV2() {
-            println("checkV2()")
-            val validCountList = LinkedList<Long>()
-            return checkRow(0, 0, validCountList)
+//            println("checkV2()")
+            return checkRow(0, 0, LinkedList<Long>())
         }
 
         private fun checkRow(rowPos: Int, damagedPos: Int, validCountList: LinkedList<Long>) {
-            val rowPosMax = groupsOfRows.size - 1
-            if (rowPos <= rowPosMax) {
-                val damagedPosMax = damagedPosMax(rowPos, damagedPos)
-                val counter = Counter()
-                for (i in damagedPos..damagedPosMax) {
-                    println("checkRow($rowPos, $damagedPos, $validCountList) numberOfDamaged = ${i - damagedPos + 1}, rowPosMax=$rowPosMax, damagedPosMax=$damagedPosMax")
-                    val currentRow = groupsOfRows[rowPos]
+            if (notAllGroupsOfRowsChecked(rowPos)) {
+                val currentRow = groupsOfRows[rowPos]
+                val currentDamagedPosMax = currentDamagedPosMax(rowPos, damagedPos)
+                val currentCounter = Counter()
+                if (canBeWithoutDamaged(currentRow)) {
+                    validCountList.add(1L)
+                    checkRow(rowPos + 1, damagedPos, validCountList)
+                    validCountList.pollLast()
+                }
+                for (i in damagedPos..currentDamagedPosMax) {
+//                    println("checkRow($rowPos, $damagedPos, $validCountList) numberOfDamaged = ${i - damagedPos + 1}, rowPosMax=${rowPosMax()}, damagedPosMax=$currentDamagedPosMax")
+
                     val currentDamaged = LinkedList<Int>()
                     for (j in damagedPos..i) {
                         val damaged = groupsOfDamaged[j]
                         currentDamaged.add(damaged)
                     }
-                    counter.init(currentRow, currentDamaged)
-                    counter.check()
-                    validCountList.add(counter.validCount)
+                    currentCounter.init(currentRow, currentDamaged)
+                    currentCounter.check()
+                    validCountList.add(currentCounter.validCount)
                     checkRow(rowPos + 1, i + 1, validCountList)
-                    for (j in damagedPos..i) {
-                        validCountList.pollLast()
-                    }
+                    validCountList.pollLast()
                 }
-
             } else {
-                println("checkRow($rowPos, $damagedPos, $validCountList) stop")
+//                println("checkRow($rowPos, $damagedPos, $validCountList) stop")
 
-                validCount += multiply(validCountList)
+                if (allGroupsOfDamagedChecked(damagedPos)) {
+                    validCount += multiply(validCountList)
+                }
             }
         }
 
-        private fun damagedPosMax(rowPos: Int, damagedPos: Int): Int {
-            var length = -1
-            val maxLength = groupsOfRows[rowPos].length
+        private fun notAllGroupsOfRowsChecked(rowPos: Int): Boolean {
+            return rowPos <= rowPosMax()
+        }
+
+        private fun canBeWithoutDamaged(currentRow: String): Boolean {
+            return !currentRow.contains(DAMAGED)
+        }
+
+        private fun allGroupsOfDamagedChecked(damagedPos: Int): Boolean {
+            return damagedPos > damagedPosMax()
+        }
+
+        private fun rowPosMax(): Int {
+            return groupsOfRows.size - 1
+        }
+
+        private fun damagedPosMax(): Int {
+            return groupsOfDamaged.size - 1
+        }
+
+        private fun currentDamagedPosMax(rowPos: Int, damagedPos: Int): Int {
             var i = damagedPos
             val maxDamagedPos = groupsOfDamaged.size - 1
+            var length = -1
+            val maxLength = groupsOfRows[rowPos].length
             while (length <= maxLength) {
-                if (i <= maxDamagedPos)
-                    length += groupsOfDamaged[i++] + 1
-                else
-                    return maxDamagedPos
+                if (i <= maxDamagedPos) length += groupsOfDamaged[i++] + 1
+                else return maxDamagedPos
             }
             return i - 2
         }
 
         private fun multiply(validCountList: LinkedList<Long>): Long {
-            var multi = 1L
-            for (countInGroup in validCountList) {
-                multi *= countInGroup
-            }
-            println("+= $multi")
-            return multi
+            return validCountList.fold(1L) {multi, value -> multi * value}
         }
     }
 

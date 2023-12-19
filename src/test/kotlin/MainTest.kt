@@ -141,7 +141,7 @@ class MainTest {
         )
     }
 
-    private fun checkCountV2(path: String): Long {
+    private fun `check countV2`(path: String): Long {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
@@ -164,7 +164,7 @@ class MainTest {
     fun testDay12checkCountV2Folded() {
         assertEquals(
             21,
-            checkCountV2(TEST_INPUT_PATH.format("Day12"))
+            `check countV2`(TEST_INPUT_PATH.format("Day12"))
         )
     }
 
