@@ -12,11 +12,25 @@ object Day12 {
     )
     const val UNKNOWN = '?'
 
-    class Counter(linesPair: List<String>) {
-        private var row = linesPair[0]
-        private var groupsOfDamaged = groupsOfDamaged(linesPair[1])
-        private val maxCount = maxCount()
-        private var validCount = 0L
+    open class Counter {
+        protected var row = ""
+        protected var groupsOfDamaged = listOf(0)
+
+        var validCount = 0L
+            protected set
+
+        open fun init(line: String) {
+            val linesPair = line.split(' ')
+            val row = linesPair[0]
+            val groupsOfDamaged = groupsOfDamaged(linesPair[1])
+            init(row, groupsOfDamaged)
+        }
+
+        fun init(row: String, groupsOfDamaged: List<Int>) {
+            this.row = row
+            this.groupsOfDamaged = groupsOfDamaged
+            this.validCount = 0L
+        }
 
         private fun maxCount(): Int {
             var count = 0
@@ -35,14 +49,14 @@ object Day12 {
             return power
         }
 
-        private fun groupsOfDamaged(line: String): List<Int> {
+        protected fun groupsOfDamaged(line: String): List<Int> {
             return line.split(',').stream()
                 .map { x -> x.toInt() }
                 .toList()
         }
 
         fun check() {
-            for (i in 0..maxCount) {
+            for (i in 0..maxCount()) {
                 checkAssumption(i)
             }
         }
@@ -102,134 +116,8 @@ object Day12 {
             }
             return true
         }
-
-        fun getValidCount(): Long {
-            return validCount
-        }
-
-        fun unfold(n: Int) {
-            val newRow = LinkedList<String>()
-            val newGroupsOfDamaged = LinkedList<Int>()
-            for (i in 0 until n) {
-                newRow.add(row)
-                newGroupsOfDamaged.addAll(groupsOfDamaged)
-            }
-            row = newRow.joinToString("$UNKNOWN")
-            groupsOfDamaged = newGroupsOfDamaged
-        }
-
-        // проблема с #?????.???????#.??? 1,2,1,1,2,2 долго считается
-        fun checkV2() {
-            checkV2(0, OPERATIONAL, 0, 0, minSpace())
-        }
-
-        private fun minSpace(): Int {
-            var minSpace = -1
-            for (g in groupsOfDamaged) {
-                minSpace += g + 1
-            }
-            return minSpace
-        }
-
-        private fun checkV2(pos: Int, prevSymbol: Char, posInGroups: Int, prevCountInGroup: Int, minSpace: Int) {
-            val nextPos = pos + 1
-            val nextPosInGroups = posInGroups + 1
-            val nextMinSpace = minSpace - 1
-            val maxPos = row.length - 1
-            if ((maxPos - pos + 1) >= minSpace) {
-                if (pos <= maxPos) {
-                    when (row[pos]) { // when (symbol)
-                        UNKNOWN -> {
-                            if (prevSymbol == DAMAGED) {
-                                if (isEndGroupOk(posInGroups, prevCountInGroup)) {
-                                    checkV2(nextPos, OPERATIONAL, nextPosInGroups, 0, nextMinSpace)
-                                } else {
-                                    checkV2(nextPos, DAMAGED, posInGroups, prevCountInGroup + 1, nextMinSpace)
-                                }
-                            } else {
-                                if (isStartGroupOk(pos, posInGroups)) {
-                                    val countInGroup = groupsOfDamaged[posInGroups] // TODO
-                                    checkV2(pos + countInGroup, DAMAGED, posInGroups, countInGroup, minSpace - countInGroup)
-                                }
-                                checkV2(nextPos, OPERATIONAL, posInGroups, 0, minSpace)
-                            }
-                        }
-
-                        DAMAGED -> {
-                            if (prevSymbol == DAMAGED) {
-                                if (!isEndGroupOk(posInGroups, prevCountInGroup)) {
-                                    checkV2(nextPos, DAMAGED, posInGroups, prevCountInGroup + 1, nextMinSpace)
-                                }
-                            } else {
-                                checkV2(nextPos, DAMAGED, posInGroups, 1, nextMinSpace)
-                            }
-                        }
-
-                        OPERATIONAL -> {
-                            if (prevSymbol == DAMAGED) {
-                                if (isEndGroupOk(posInGroups, prevCountInGroup)) {
-                                    checkV2(nextPos, OPERATIONAL, nextPosInGroups, 0, nextMinSpace)
-                                }
-                            } else {
-                                checkV2(nextPos, OPERATIONAL, posInGroups, 0, minSpace)
-                            }
-                        }
-                    }
-                } else {
-                    if (prevSymbol == DAMAGED) {
-                        if (isTerminalDamagedOk(posInGroups, prevCountInGroup)) {
-                            validCount++
-                        }
-                    } else {
-                        if (isTerminalOperationalOk(posInGroups)) {
-                            validCount++
-                        }
-                    }
-                }
-            }
-        }
-
-        private fun isEndGroupOk(posInGroups: Int, prevCountInGroup: Int): Boolean {
-            return if (posInGroups < groupsOfDamaged.size) {
-                prevCountInGroup == groupsOfDamaged[posInGroups] // prevCountInGroup == countInGroup
-            } else {
-                false
-            }
-        }
-
-        private fun isStartGroupOk(pos: Int, posInGroups: Int): Boolean {
-            if (posInGroups < groupsOfDamaged.size) {
-                var delta = 0
-                var symbol = UNKNOWN
-                for (i in pos until row.length) {
-                    symbol = row[i]
-                    if (symbol != UNKNOWN) {
-                        delta = i - pos
-                        break
-                    }
-                }
-                return if (symbol == OPERATIONAL) {
-                    delta >= groupsOfDamaged[posInGroups]
-                } else {
-                    true
-                }
-            } else {
-                return false
-            }
-        }
-
-        private fun isTerminalDamagedOk(posInGroups: Int, prevCountInGroup: Int): Boolean {
-            return if (posInGroups == groupsOfDamaged.size - 1) {
-                prevCountInGroup == groupsOfDamaged[posInGroups]
-            } else {
-                false
-            }
-        }
-
-        private fun isTerminalOperationalOk(posInGroups: Int): Boolean {
-            return posInGroups == groupsOfDamaged.size
-        }
     }
+
 
     fun count(): Long {
         val path = MAIN_INPUT_PATH.format("Day12")
@@ -242,16 +130,113 @@ object Day12 {
         val scanner = Scanner(file)
         var sumOfAllPossibleArrangements = 0L
         while (scanner.hasNext()) {
-            val linesPair = scanner.nextLine().split(' ')
-            println(linesPair)
-            val counter = Counter(linesPair)
+            val line = scanner.nextLine()
+            println(line)
+            val counter = Counter()
+            counter.init(line)
             counter.check()
-            val validCount = counter.getValidCount()
+            val validCount = counter.validCount
             println(validCount)
             println()
             sumOfAllPossibleArrangements += validCount
         }
         return sumOfAllPossibleArrangements
+    }
+
+    class SuperCounter() : Counter() {
+        private var groupsOfRows = listOf("")
+
+        override fun init(line: String) {
+            val linesPair = line.split(' ')
+            val row = linesPair[0]
+            val groupsOfRows = groupsOfRows(row)
+            val groupsOfDamaged = groupsOfDamaged(linesPair[1])
+            init(row, groupsOfRows, groupsOfDamaged)
+        }
+
+        private fun init(row: String, groupsOfRows: List<String>, groupsOfDamaged: List<Int>) {
+            this.row = row
+            this.groupsOfRows = groupsOfRows
+            this.groupsOfDamaged = groupsOfDamaged
+            this.validCount = 0L
+        }
+
+        private fun groupsOfRows(line: String): List<String> {
+            val groups = line.split(Regex("[$OPERATIONAL]+"))
+            println(line)
+            println(groups)
+            return groups
+        }
+
+        fun unfold(n: Int) {
+            val newRow = LinkedList<String>()
+            val newGroupsOfDamaged = LinkedList<Int>()
+            for (i in 0 until n) {
+                newRow.add(row)
+                newGroupsOfDamaged.addAll(groupsOfDamaged)
+            }
+            row = newRow.joinToString("$UNKNOWN")
+            groupsOfRows = groupsOfRows(row)
+            groupsOfDamaged = newGroupsOfDamaged
+        }
+
+        fun checkV2() {
+            println("checkV2()")
+            val validCountList = LinkedList<Long>()
+            return checkRow(0, 0, validCountList)
+        }
+
+        private fun checkRow(rowPos: Int, damagedPos: Int, validCountList: LinkedList<Long>) {
+            val rowPosMax = groupsOfRows.size - 1
+            if (rowPos <= rowPosMax) {
+                val damagedPosMax = damagedPosMax(rowPos, damagedPos)
+                val counter = Counter()
+                for (i in damagedPos..damagedPosMax) {
+                    println("checkRow($rowPos, $damagedPos, $validCountList) numberOfDamaged = ${i - damagedPos + 1}, rowPosMax=$rowPosMax, damagedPosMax=$damagedPosMax")
+                    val currentRow = groupsOfRows[rowPos]
+                    val currentDamaged = LinkedList<Int>()
+                    for (j in damagedPos..i) {
+                        val damaged = groupsOfDamaged[j]
+                        currentDamaged.add(damaged)
+                    }
+                    counter.init(currentRow, currentDamaged)
+                    counter.check()
+                    validCountList.add(counter.validCount)
+                    checkRow(rowPos + 1, i + 1, validCountList)
+                    for (j in damagedPos..i) {
+                        validCountList.pollLast()
+                    }
+                }
+
+            } else {
+                println("checkRow($rowPos, $damagedPos, $validCountList) stop")
+
+                validCount += multiply(validCountList)
+            }
+        }
+
+        private fun damagedPosMax(rowPos: Int, damagedPos: Int): Int {
+            var length = -1
+            val maxLength = groupsOfRows[rowPos].length
+            var i = damagedPos
+            val maxDamagedPos = groupsOfDamaged.size - 1
+            while (length <= maxLength) {
+                if (i <= maxDamagedPos)
+                    length += groupsOfDamaged[i++] + 1
+                else
+                    return maxDamagedPos
+            }
+            return i - 2
+        }
+
+        private fun multiply(validCountList: LinkedList<Long>): Long {
+            var multi = 1L
+            for (countInGroup in validCountList) {
+                multi *= countInGroup
+            }
+            println("+= $multi")
+            return multi
+        }
     }
 
     fun countV2(): Long {
@@ -265,16 +250,19 @@ object Day12 {
         val scanner = Scanner(file)
         var sumOfAllPossibleArrangements = 0L
         while (scanner.hasNext()) {
-            val linesPair = scanner.nextLine().split(' ')
-            println(linesPair)
-            val counter = Counter(linesPair)
-            counter.unfold(5)
-            counter.checkV2()
-            val validCount = counter.getValidCount()
+            val line = scanner.nextLine()
+            println(line)
+            val superCounter = SuperCounter()
+            superCounter.init(line)
+            superCounter.unfold(5)
+            superCounter.checkV2()
+            val validCount = superCounter.validCount
             println(validCount)
             println()
             sumOfAllPossibleArrangements += validCount
         }
         return sumOfAllPossibleArrangements
     }
+    // раньше ????.?????????? 1,1,2,2 считалось больше 10 часов
+    // в новой версии пока непонятно
 }

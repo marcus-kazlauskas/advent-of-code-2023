@@ -141,18 +141,18 @@ class MainTest {
         )
     }
 
-    private fun checkCountV2(path: String, isUnfolded: Boolean): Long {
+    private fun checkCountV2(path: String): Long {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
         var sumOfAllPossibleArrangements = 0L
         while (scanner.hasNext()) {
-            val linesPair = scanner.nextLine().split(' ')
-            println(linesPair)
-            val counter = Day12.Counter(linesPair)
-            if (isUnfolded) counter.unfold(5)
-            counter.checkV2()
-            val validCount = counter.getValidCount()
+            val line = scanner.nextLine()
+            println(line)
+            val superCounter = Day12.SuperCounter()
+            superCounter.init(line)
+            superCounter.checkV2()
+            val validCount = superCounter.validCount
             println(validCount)
             println()
             sumOfAllPossibleArrangements += validCount
@@ -164,7 +164,7 @@ class MainTest {
     fun testDay12checkCountV2Folded() {
         assertEquals(
             21,
-            checkCountV2(TEST_INPUT_PATH.format("Day12"), false)
+            checkCountV2(TEST_INPUT_PATH.format("Day12"))
         )
     }
 
