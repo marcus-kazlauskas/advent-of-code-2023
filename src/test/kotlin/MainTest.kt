@@ -1,8 +1,5 @@
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import java.io.File
-import java.util.*
-import kotlin.io.path.Path
 
 class MainTest {
     @Test
@@ -141,33 +138,6 @@ class MainTest {
         )
     }
 
-    private fun `check countV2`(path: String): Long {
-        val input = Path(path)
-        val file = File(input.toUri())
-        val scanner = Scanner(file)
-        var sumOfAllPossibleArrangements = 0L
-        while (scanner.hasNext()) {
-            val line = scanner.nextLine()
-            println(line)
-            val superCounter = Day12.SuperCounter()
-            superCounter.init(line)
-            superCounter.checkV2()
-            val validCount = superCounter.validCount
-            println(validCount)
-            println()
-            sumOfAllPossibleArrangements += validCount
-        }
-        return sumOfAllPossibleArrangements
-    }
-
-    @Test
-    fun testDay12checkCountV2Folded() {
-        assertEquals(
-            21,
-            `check countV2`(TEST_INPUT_PATH.format("Day12"))
-        )
-    }
-
     @Test
     fun testDay12CountV2() {
         assertEquals(
@@ -229,6 +199,14 @@ class MainTest {
         assertEquals(
             19114,
             Day19.count(TEST_INPUT_PATH.format("Day19"))
+        )
+    }
+
+    @Test
+    fun testDay20Count() {
+        assertEquals(
+            11687500,
+            Day20.count(TEST_INPUT_PATH.format("Day20"))
         )
     }
 }
