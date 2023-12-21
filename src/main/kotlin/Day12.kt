@@ -4,12 +4,12 @@ import kotlin.io.path.Path
 
 object Day12 {
     const val VALUE = 1097
+    /*
+        это самая сложная задачав aoc по мнению людей из реддита
+        я убил на эту хуйню дней десять
+    */
     private const val OPERATIONAL = '.'
     private const val DAMAGED = '#'
-    val numberToSymbol = mapOf(
-        0   to DAMAGED,
-        1   to OPERATIONAL
-    )
     const val UNKNOWN = '?'
 
     open class Counter {
@@ -32,92 +32,68 @@ object Day12 {
             this.validCount = 0L
         }
 
-        private fun maxCount(): Long {
-            var count = 0
-            for (c in row) {
-                if (c == UNKNOWN) count++
-            }
-            return pow(count) - 1
-        }
-
-        private fun pow(n: Int): Long {
-            val x = numberToSymbol.size
-            var power = 1L
-            for (i in 1..n) {
-                power *= x
-            }
-            return power
-        }
-
         protected fun groupsOfDamaged(line: String): List<Int> {
-            return line.split(',').stream()
+            return line.split(',')
                 .map { x -> x.toInt() }
                 .toList()
         }
 
-        fun check() {
-            for (i in 0..maxCount()) {
-                checkAssumption(i)
+        open fun check() {
+            check(0, OPERATIONAL, 0)
+        }
+
+        private fun check(pos: Int, prevSymbol: Char, posInGroups: Int) {
+            if (isEnoughSpace(pos, posInGroups)) {
+                if (row[pos] == UNKNOWN) { // текущий символ -- symbol
+                    if (prevSymbol == DAMAGED) {
+                        check(pos + 1, OPERATIONAL, posInGroups)
+                    } else {
+                        if (isEnoughGroups(posInGroups)) {
+                            val delta = groupsOfDamaged[posInGroups]
+                            check(pos + delta, DAMAGED, posInGroups + 1)
+                        }
+                        check(pos + 1, OPERATIONAL, posInGroups)
+                    }
+                } else { // symbol == DAMAGED
+                    if (prevSymbol != DAMAGED) {
+                        if (isEnoughGroups(posInGroups)) {
+                            val delta = groupsOfDamaged[posInGroups]
+                            check(pos + delta, DAMAGED, posInGroups + 1)
+                        }
+                    }
+                } /*
+                    symbol не может быть OPERATIONAL,
+                    потому что мы делим строки на непересекающиеся группы,
+                    а затем считаем произведение перестановок в каждой такой группе
+                */
+            } else if (!isEnoughGroups(posInGroups)) {
+                validCount++
             }
         }
 
-        private fun checkAssumption(i: Long) {
-            val assumption = createAssumption(i)
-            val groups = createGroups(assumption)
-            if (compareGroups(groups)) validCount++
-        }
-
-        private fun createAssumption(i: Long): List<Char> {
-            var currentCount = i
-            val assumption = LinkedList<Char>()
-            for (c in row.reversed()) {
-                if (c == UNKNOWN) {
-                    val radix = numberToSymbol.size
-                    val number = (currentCount % radix).toInt()
-                    val symbol = numberToSymbol[number]
-                    assumption.addFirst(symbol)
-                    currentCount /= radix
-                } else {
-                    assumption.addFirst(c)
+        private fun isEnoughSpace(pos: Int, posInGroups: Int): Boolean {
+            return if (pos <= posMax()) {
+                var spaceMin = -1
+                val space = posMax() - pos + 1
+                for (i in posInGroups..posInGroupsMax()) {
+                    spaceMin += groupsOfDamaged[i] + 1
                 }
-            }
-            return assumption
+                space >= spaceMin
+            } else false
         }
 
-        private fun createGroups(assumption: List<Char>): List<Int> {
-            val groups = LinkedList<Int>()
-            var groupCount = 0
-            var prevSymbol = OPERATIONAL
-            for (symbol in assumption) {
-                if (symbol == DAMAGED) {
-                    groupCount++
-                } else if (prevSymbol == DAMAGED && symbol == OPERATIONAL) {
-                    groups.add(groupCount)
-                    groupCount = 0
-                }
-                prevSymbol = symbol
-            }
-            if (prevSymbol == DAMAGED) {
-                groups.add(groupCount)
-            }
-            return groups
+        private fun posMax(): Int {
+            return row.length - 1
         }
 
-        private fun compareGroups(groups: List<Int>): Boolean {
-            if (groupsOfDamaged.size != groups.size) {
-                return false
-            }
-            for (i in groupsOfDamaged.indices) {
-                val groupOfDamaged = groupsOfDamaged[i]
-                val group = groups[i]
-                if (groupOfDamaged != group) {
-                    return false
-                }
-            }
-            return true
+        private fun posInGroupsMax(): Int {
+            return groupsOfDamaged.size - 1
+        }
+
+        private fun isEnoughGroups(posInGroups: Int): Boolean {
+            return posInGroups <= posInGroupsMax()
         }
     }
-
 
     fun count(): Long {
         val path = MAIN_INPUT_PATH.format("Day12")
@@ -132,12 +108,11 @@ object Day12 {
         while (scanner.hasNext()) {
             val line = scanner.nextLine()
             println(line)
-            val counter = Counter()
+            val counter = SuperCounter()
             counter.init(line)
             counter.check()
             val validCount = counter.validCount
-            println(validCount)
-            println()
+            println("$validCount\n")
             sumOfAllPossibleArrangements += validCount
         }
         return sumOfAllPossibleArrangements
@@ -176,46 +151,31 @@ object Day12 {
             }
             row = newRow.joinToString("$UNKNOWN")
             groupsOfRows = groupsOfRows(row)
-            println(groupsOfRows)
             groupsOfDamaged = newGroupsOfDamaged
-            println(groupsOfDamaged)
         }
 
-        fun checkV2() {
-//            println("checkV2()")
+        override fun check() {
             return checkRow(0, 0, LinkedList<Long>())
         }
 
         private fun checkRow(rowPos: Int, damagedPos: Int, validCountList: LinkedList<Long>) {
             if (notAllGroupsOfRowsChecked(rowPos)) {
                 val currentRow = groupsOfRows[rowPos]
-                val currentDamagedPosMax = currentDamagedPosMax(rowPos, damagedPos)
                 val currentCounter = Counter()
                 if (canBeWithoutDamaged(currentRow)) {
                     validCountList.add(1L)
                     checkRow(rowPos + 1, damagedPos, validCountList)
                     validCountList.pollLast()
                 }
-                for (i in damagedPos..currentDamagedPosMax) {
-//                    println("checkRow($rowPos, $damagedPos, $validCountList) numberOfDamaged = ${i - damagedPos + 1}, rowPosMax=${rowPosMax()}, damagedPosMax=$currentDamagedPosMax")
-
-                    val currentDamaged = LinkedList<Int>()
-                    for (j in damagedPos..i) {
-                        val damaged = groupsOfDamaged[j]
-                        currentDamaged.add(damaged)
-                    }
-                    currentCounter.init(currentRow, currentDamaged)
+                for (i in damagedPos..currentDamagedPosMax(rowPos, damagedPos)) {
+                    currentCounter.init(currentRow, currentDamaged(damagedPos, i))
                     currentCounter.check()
                     validCountList.add(currentCounter.validCount)
                     checkRow(rowPos + 1, i + 1, validCountList)
                     validCountList.pollLast()
                 }
-            } else {
-//                println("checkRow($rowPos, $damagedPos, $validCountList) stop")
-
-                if (allGroupsOfDamagedChecked(damagedPos)) {
-                    validCount += multiply(validCountList)
-                }
+            } else if (allGroupsOfDamagedChecked(damagedPos)) {
+                validCount += multiply(validCountList)
             }
         }
 
@@ -225,18 +185,6 @@ object Day12 {
 
         private fun canBeWithoutDamaged(currentRow: String): Boolean {
             return !currentRow.contains(DAMAGED)
-        }
-
-        private fun allGroupsOfDamagedChecked(damagedPos: Int): Boolean {
-            return damagedPos > damagedPosMax()
-        }
-
-        private fun rowPosMax(): Int {
-            return groupsOfRows.size - 1
-        }
-
-        private fun damagedPosMax(): Int {
-            return groupsOfDamaged.size - 1
         }
 
         private fun currentDamagedPosMax(rowPos: Int, damagedPos: Int): Int {
@@ -249,6 +197,27 @@ object Day12 {
                 else return maxDamagedPos
             }
             return i - 2
+        }
+
+        private fun currentDamaged(damagedPos: Int, i: Int): LinkedList<Int> {
+            val currentDamaged = LinkedList<Int>()
+            for (j in damagedPos..i) {
+                val damaged = groupsOfDamaged[j]
+                currentDamaged.add(damaged)
+            }
+            return currentDamaged
+        }
+
+        private fun allGroupsOfDamagedChecked(damagedPos: Int): Boolean {
+            return damagedPos > damagedPosMax()
+        }
+
+        private fun rowPosMax(): Int {
+            return groupsOfRows.size - 1
+        }
+
+        private fun damagedPosMax(): Int {
+            return groupsOfDamaged.size - 1
         }
 
         private fun multiply(validCountList: LinkedList<Long>): Long {
@@ -272,10 +241,9 @@ object Day12 {
             val superCounter = SuperCounter()
             superCounter.init(line)
             superCounter.unfold(5)
-            superCounter.checkV2()
+            superCounter.check()
             val validCount = superCounter.validCount
-            println(validCount)
-            println()
+            println("$validCount\n")
             sumOfAllPossibleArrangements += validCount
         }
         return sumOfAllPossibleArrangements
