@@ -6,8 +6,8 @@ object Day12 {
     const val VALUE = 1097
     /*
         это самая сложная задачав aoc по мнению людей из реддита
-        я убил на эту хуйню дней десять
-
+        я убил на эту хуйню дней десять.
+        и она всё равно неправильно считается...
     */
     private const val OPERATIONAL = '.'
     private const val DAMAGED = '#'
@@ -170,18 +170,11 @@ object Day12 {
                 if (canBeWithoutDamaged(currentRow)) {
                     checkNextRow(rowPos + 1, damagedPos, 1L)
                 }
-                if (oneRowToCheck(rowPos)) {
-                    val currentDamagedPosMax = currentDamagedPosMax(rowPos, damagedPos)
-                    val currentDamaged = currentDamaged(damagedPos, currentDamagedPosMax)
-                    currentCounter.init(currentRow, currentDamaged)
+                for (i in currentDamagedPosMin(rowPos, damagedPos)..
+                        currentDamagedPosMax(rowPos, damagedPos)) {
+                    currentCounter.init(currentRow, currentDamaged(damagedPos, i))
                     currentCounter.check()
-                    checkNextRow(rowPos + 1, currentDamagedPosMax + 1, currentCounter.validCount)
-                } else {
-                    for (i in damagedPos..currentDamagedPosMax(rowPos, damagedPos)) {
-                        currentCounter.init(currentRow, currentDamaged(damagedPos, i))
-                        currentCounter.check()
-                        checkNextRow(rowPos + 1, i + 1, currentCounter.validCount)
-                    }
+                    checkNextRow(rowPos + 1, i + 1, currentCounter.validCount)
                 }
             } else if (allGroupsOfDamagedChecked(damagedPos)) {
                 validCount += multiply(validCountList)
@@ -202,13 +195,17 @@ object Day12 {
             return !currentRow.contains(DAMAGED)
         }
 
-        private fun oneRowToCheck(rowPos: Int): Boolean {
-            return rowPos == rowPosMax()
+        private fun currentDamagedPosMin(rowPos: Int, damagedPos: Int): Int {
+            return if (rowPos == rowPosMax()) {
+                currentDamagedPosMax(rowPos, damagedPos)
+            } else {
+                damagedPos
+            }
         }
 
         private fun currentDamagedPosMax(rowPos: Int, damagedPos: Int): Int {
             var i = damagedPos
-            val maxDamagedPos = groupsOfDamaged.size - 1
+            val maxDamagedPos = damagedPosMax()
             var length = -1
             val maxLength = groupsOfRows[rowPos].length
             while (length <= maxLength) {
