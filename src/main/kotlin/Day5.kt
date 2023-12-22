@@ -1,6 +1,5 @@
 import java.io.File
 import java.util.*
-import java.util.stream.Collectors
 import kotlin.io.path.Path
 
 object Day5 {
@@ -26,10 +25,10 @@ object Day5 {
         }
 
         fun getDestination(inputSource: Long): Long {
-            val maxLowerKey = mappingList.stream()
+            val maxLowerKey = mappingList
                 .filter { x ->
                     x[SOURCE_INDEX] <= inputSource
-                }.collect(Collectors.toList())
+                }.toList()
                 .maxByOrNull { x ->
                     x[SOURCE_INDEX]
                 }

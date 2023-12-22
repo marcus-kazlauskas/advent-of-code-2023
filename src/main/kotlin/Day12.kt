@@ -7,6 +7,7 @@ object Day12 {
     /*
         это самая сложная задачав aoc по мнению людей из реддита
         я убил на эту хуйню дней десять
+
     */
     private const val OPERATIONAL = '.'
     private const val DAMAGED = '#'
@@ -120,6 +121,7 @@ object Day12 {
 
     class SuperCounter() : Counter() {
         private var groupsOfRows = listOf("")
+        private var validCountList = LinkedList<Long>()
 
         override fun init(line: String) {
             val linesPair = line.split(' ')
@@ -133,6 +135,7 @@ object Day12 {
             this.row = row
             this.groupsOfRows = groupsOfRows
             this.groupsOfDamaged = groupsOfDamaged
+            this.validCountList = LinkedList<Long>()
             this.validCount = 0L
         }
 
@@ -152,31 +155,43 @@ object Day12 {
             row = newRow.joinToString("$UNKNOWN")
             groupsOfRows = groupsOfRows(row)
             groupsOfDamaged = newGroupsOfDamaged
+            validCountList = LinkedList<Long>()
+            validCount = 0L
         }
 
         override fun check() {
-            return checkRow(0, 0, LinkedList<Long>())
+            return checkRow(0, 0)
         }
 
-        private fun checkRow(rowPos: Int, damagedPos: Int, validCountList: LinkedList<Long>) {
+        private fun checkRow(rowPos: Int, damagedPos: Int) {
             if (notAllGroupsOfRowsChecked(rowPos)) {
                 val currentRow = groupsOfRows[rowPos]
                 val currentCounter = Counter()
                 if (canBeWithoutDamaged(currentRow)) {
-                    validCountList.add(1L)
-                    checkRow(rowPos + 1, damagedPos, validCountList)
-                    validCountList.pollLast()
+                    checkNextRow(rowPos + 1, damagedPos, 1L)
                 }
-                for (i in damagedPos..currentDamagedPosMax(rowPos, damagedPos)) {
-                    currentCounter.init(currentRow, currentDamaged(damagedPos, i))
+                if (oneRowToCheck(rowPos)) {
+                    val currentDamagedPosMax = currentDamagedPosMax(rowPos, damagedPos)
+                    val currentDamaged = currentDamaged(damagedPos, currentDamagedPosMax)
+                    currentCounter.init(currentRow, currentDamaged)
                     currentCounter.check()
-                    validCountList.add(currentCounter.validCount)
-                    checkRow(rowPos + 1, i + 1, validCountList)
-                    validCountList.pollLast()
+                    checkNextRow(rowPos + 1, currentDamagedPosMax + 1, currentCounter.validCount)
+                } else {
+                    for (i in damagedPos..currentDamagedPosMax(rowPos, damagedPos)) {
+                        currentCounter.init(currentRow, currentDamaged(damagedPos, i))
+                        currentCounter.check()
+                        checkNextRow(rowPos + 1, i + 1, currentCounter.validCount)
+                    }
                 }
             } else if (allGroupsOfDamagedChecked(damagedPos)) {
                 validCount += multiply(validCountList)
             }
+        }
+
+        private fun checkNextRow(rowPos: Int, damagedPos: Int, validCount: Long) {
+            validCountList.add(validCount)
+            checkRow(rowPos, damagedPos)
+            validCountList.pollLast()
         }
 
         private fun notAllGroupsOfRowsChecked(rowPos: Int): Boolean {
@@ -185,6 +200,10 @@ object Day12 {
 
         private fun canBeWithoutDamaged(currentRow: String): Boolean {
             return !currentRow.contains(DAMAGED)
+        }
+
+        private fun oneRowToCheck(rowPos: Int): Boolean {
+            return rowPos == rowPosMax()
         }
 
         private fun currentDamagedPosMax(rowPos: Int, damagedPos: Int): Int {
@@ -248,6 +267,4 @@ object Day12 {
         }
         return sumOfAllPossibleArrangements
     }
-    // раньше ????.?????????? 1,1,2,2 считалось больше 10 часов
-    // в новой версии пока непонятно
 }
