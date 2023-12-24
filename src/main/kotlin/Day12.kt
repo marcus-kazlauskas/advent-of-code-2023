@@ -7,7 +7,8 @@ object Day12 {
     /*
         это самая сложная задачав aoc по мнению людей из реддита
         я убил на эту хуйню дней десять.
-        и она всё равно неправильно считается...
+        с помощью примера .?.?.?. 1,1 удалось найти ошибку.
+        теперь всё хорошо, хотя считается 34 мин 5 сек
     */
     private const val OPERATIONAL = '.'
     private const val DAMAGED = '#'
@@ -170,11 +171,13 @@ object Day12 {
                 if (canBeWithoutDamaged(currentRow)) {
                     checkNextRow(rowPos + 1, damagedPos, 1L)
                 }
-                for (i in currentDamagedPosMin(rowPos, damagedPos)..
-                        currentDamagedPosMax(rowPos, damagedPos)) {
-                    currentCounter.init(currentRow, currentDamaged(damagedPos, i))
-                    currentCounter.check()
-                    checkNextRow(rowPos + 1, i + 1, currentCounter.validCount)
+                if (!allGroupsOfDamagedChecked(damagedPos)) {
+                    for (i in currentDamagedPosMin(rowPos, damagedPos)..
+                            currentDamagedPosMax(rowPos, damagedPos)) {
+                        currentCounter.init(currentRow, currentDamaged(damagedPos, i))
+                        currentCounter.check()
+                        checkNextRow(rowPos + 1, i + 1, currentCounter.validCount)
+                    }
                 }
             } else if (allGroupsOfDamagedChecked(damagedPos)) {
                 validCount += multiply(validCountList)
@@ -206,13 +209,13 @@ object Day12 {
         private fun currentDamagedPosMax(rowPos: Int, damagedPos: Int): Int {
             var i = damagedPos
             val maxDamagedPos = damagedPosMax()
-            var length = -1
+            var length = groupsOfDamaged[i]
             val maxLength = groupsOfRows[rowPos].length
             while (length <= maxLength) {
-                if (i <= maxDamagedPos) length += groupsOfDamaged[i++] + 1
+                if (i < maxDamagedPos) length += groupsOfDamaged[++i] + 1
                 else return maxDamagedPos
             }
-            return i - 2
+            return i - 1
         }
 
         private fun currentDamaged(damagedPos: Int, i: Int): LinkedList<Int> {
