@@ -71,7 +71,7 @@ fun main() {
 //        46  -> println(Day23.countV2())
         47  -> println(Day24.count())
 //        48  -> println(Day24.countV2())
-//        49  -> println(Day25.count())
+        49  -> println(Day25.count())
 //        50  -> println(Day25.countV2())
         else    -> println("Puzzle not found!")
     }
@@ -102,10 +102,11 @@ fun message(): String {
         Day21.VALUE,
         Day22.VALUE,
         Day23.VALUE,
-        Day24.VALUE
+        Day24.VALUE,
+        Day25.VALUE
     )
     for (i in list.indices) {
         println("%4s".format(list[i]))
     }
-    return "To be continued..."
+    return "иии..."
 }
