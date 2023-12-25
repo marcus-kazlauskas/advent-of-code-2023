@@ -106,7 +106,9 @@ fun message(): String {
         Day25.VALUE
     )
     for (i in list.indices) {
-        println("%4s".format(list[i]))
+        val value = list[i]
+        val code = value - i - 1
+        println("%4s -> %c".format(value, (if (code < 1000) code - 900 else code).toChar()))
     }
-    return "иии..."
+    return "С Рождеством и Новым годом!"
 }
