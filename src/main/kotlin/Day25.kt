@@ -3,7 +3,7 @@ import java.util.*
 import kotlin.io.path.Path
 
 object Day25 {
-    const val VALUE = 933
+    const val VALUE = 958
 
     fun count(): Int {
         val path = MAIN_INPUT_PATH.format("Day25")
