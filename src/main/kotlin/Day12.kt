@@ -1,3 +1,14 @@
+//
+// .∧＿∧
+// ( ･ω･｡)つ━☆・*。
+// ⊂  ノ    ・゜+.
+// しーＪ   °。+ *´¨)
+//          .· ´¸.·*´¨) ¸.·*¨)
+//           (¸.·´ (¸.·'* ☆ вжух, вжух и в продакшн
+//
+
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 import kotlin.io.path.Path
@@ -254,17 +265,25 @@ object Day12 {
         val file = File(input.toUri())
         val scanner = Scanner(file)
         var sumOfAllPossibleArrangements = 0L
-        while (scanner.hasNext()) {
-            val line = scanner.nextLine()
-            println(line)
-            val superCounter = SuperCounter()
-            superCounter.init(line)
-            superCounter.unfold(5)
-            superCounter.check()
-            val validCount = superCounter.validCount
-            println("$validCount\n")
-            sumOfAllPossibleArrangements += validCount
+        runBlocking {
+            taskFlow(scanner).collect{ line -> sumOfAllPossibleArrangements += taskCalc(line) }
         }
         return sumOfAllPossibleArrangements
+    }
+
+    private fun taskFlow(scanner: Scanner): Flow<String> = flow {
+        while (scanner.hasNext()) {
+            emit(scanner.nextLine())
+        }
+    }
+
+    private fun taskCalc(line: String): Long {
+        val superCounter = SuperCounter()
+        superCounter.init(line)
+        superCounter.unfold(5)
+        superCounter.check()
+        val validCount = superCounter.validCount
+        println("$line\n$validCount\n")
+        return validCount
     }
 }
