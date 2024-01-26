@@ -7,23 +7,23 @@
 //           (¸.·´ (¸.·'* ☆ вжух, вжух и в продакшн
 //
 
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.io.File
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedDeque
 import kotlin.io.path.Path
 
 object Day12 {
     const val VALUE = 1097
     /*
         это самая сложная задачав aoc по мнению людей из реддита
-        я убил на эту хуйню дней десять.
-        с помощью примера .?.?.?. 1,1 удалось найти ошибку.
-        теперь всё хорошо, хотя считается 34 мин 5 сек
+        с помощью примера .?.?.?. 1,1 удалось найти ошибку
+        благодаря использованию корутин считается 13 мин вместо 34 мин
     */
     private const val OPERATIONAL = '.'
     private const val DAMAGED = '#'
-    const val UNKNOWN = '?'
+    private const val UNKNOWN = '?'
+    private const val COROUTINES_NUMBER = 8
 
     open class Counter {
         protected var row = ""
@@ -251,7 +251,7 @@ object Day12 {
         }
 
         private fun multiply(validCountList: LinkedList<Long>): Long {
-            return validCountList.fold(1L) {multi, value -> multi * value}
+            return validCountList.fold(1L) { multi, value -> multi * value }
         }
     }
 
@@ -264,26 +264,52 @@ object Day12 {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
-        var sumOfAllPossibleArrangements = 0L
+        val inDeque = ConcurrentLinkedDeque<String>()
+        val outDeque = ConcurrentLinkedDeque<Long>()
+        setTask(scanner, inDeque)
         runBlocking {
-            taskFlow(scanner).collect{ line -> sumOfAllPossibleArrangements += taskCalc(line) }
+            withContext(Dispatchers.Default) {
+                runCalc(inDeque, outDeque)
+            }
         }
-        return sumOfAllPossibleArrangements
+        return sum(outDeque)
     }
 
-    private fun taskFlow(scanner: Scanner): Flow<String> = flow {
+    private fun setTask(scanner: Scanner, inDeque: ConcurrentLinkedDeque<String>) {
         while (scanner.hasNext()) {
-            emit(scanner.nextLine())
+            val line = scanner.nextLine()
+            inDeque.add(line)
         }
     }
 
-    private fun taskCalc(line: String): Long {
+    private suspend fun runCalc(
+        inDeque: ConcurrentLinkedDeque<String>, outDeque: ConcurrentLinkedDeque<Long>
+    ) {
+        coroutineScope {
+            repeat(COROUTINES_NUMBER) {
+                launch {
+                    while (inDeque.isNotEmpty()) {
+                        calcTask(inDeque, outDeque)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun calcTask(
+        inDeque: ConcurrentLinkedDeque<String>, outDeque: ConcurrentLinkedDeque<Long>
+    ) {
+        val line = inDeque.poll()
         val superCounter = SuperCounter()
         superCounter.init(line)
         superCounter.unfold(5)
         superCounter.check()
         val validCount = superCounter.validCount
+        outDeque.add(validCount)
         println("$line\n$validCount\n")
-        return validCount
+    }
+
+    private fun sum(outDeque: ConcurrentLinkedDeque<Long>): Long {
+        return outDeque.fold(0L) { sum, value -> sum + value }
     }
 }
