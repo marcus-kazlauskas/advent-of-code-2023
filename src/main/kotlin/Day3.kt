@@ -5,14 +5,20 @@ import kotlin.io.path.Path
 object Day3 {
     const val VALUE = 1086
     private const val DEFAULT_SYMBOL = '.'
+    private const val WINDOW_WIDTH = 3
     private const val UP_LINE_INDEX = 0
     private const val CURRENT_LINE_INDEX = 1
     private const val DOWN_LINE_INDEX = 2
+    private const val DEFAULT_POS = -1
 
     class SearchWindow() {
         private val window = LinkedList<String>()
-        private var stringNumbersInLine = LinkedList<String>()
-        private var partNumbersSum = 0
+        private var pos = DEFAULT_POS
+        private val symbol = ArrayList<Char>()
+        private val prevSymbol = ArrayList<Char>()
+        private val numberInConstruction = LinkedList<Char>()
+        private var adjacent = false
+        private val stringNumbers = LinkedList<String>()
 
         fun firstLine(scanner: Scanner) {
             val firstLine = scanner.nextLine()
@@ -30,85 +36,118 @@ object Day3 {
         }
 
         fun lastLine() {
-            val length = window[1].length
+            val length = window[CURRENT_LINE_INDEX].length
             val emptyLine = createEmptyLine(length)
             window.poll()
             window.add(emptyLine)
         }
 
         private fun createEmptyLine(length: Int): String {
-            return CharArray(length){DEFAULT_SYMBOL}.concatToString()
+            return CharArray(length) { DEFAULT_SYMBOL }.concatToString()
         }
 
         fun findPartNumbers() {
-            println(window[UP_LINE_INDEX])
-            println(window[CURRENT_LINE_INDEX])
-            println(window[DOWN_LINE_INDEX])
-            val stringNumbers = window[CURRENT_LINE_INDEX].split(Regex("[^0-9]+"))
-            stringNumbersInLine = LinkedList<String>()
-            for (stringNumber in stringNumbers) {
-                val count = count(stringNumber)
-                stringNumbersInLine.add(stringNumber)
-                print(stringNumber)
-                if (stringNumber != "" && isPartNumber(stringNumber, count)) {
-                    print(" yes ")
-                    val number = stringNumber.toInt()
-                    println(number)
-                    partNumbersSum += number
-                } else println(" no")
+            setSymbolDefault()
+            for (i in window[CURRENT_LINE_INDEX].indices) {
+                nextSymbol()
+                checkSymbol()
             }
         }
 
-        private fun count(stringNumber: String): Int {
-            var i = 0
-            for (numberInLine in stringNumbersInLine) {
-                if (numberInLine == stringNumber) i++
-            }
-            return i
-        }
-
-        private fun isPartNumber(stringNumber: String, count: Int): Boolean {
-            val regex = Regex("[^0-9]?$stringNumber[^0-9]?")
-            var match = regex.find(window[CURRENT_LINE_INDEX])!!
-            for (i in 0 until count) {
-                match = match.next()!!
-            }
-            val range = match.range
-//            if (match.value == ".192.") {
-//                println()
-//                println("stringNumbersInLine = $stringNumbersInLine")
-//                println("count = $count")
-//                println("match = ${match.value}")
-//                println(range)
-//            }
-            var check = false
-            for (i in range) {
-                if (charIsSymbol(UP_LINE_INDEX, i)
-                    || charIsSymbol(CURRENT_LINE_INDEX, i)
-                    || charIsSymbol(DOWN_LINE_INDEX, i)) {
-                    check = true
-                    break
+        private fun setSymbolDefault() {
+            pos = DEFAULT_POS
+            if (symbol.isEmpty()) {
+                repeat(WINDOW_WIDTH) {
+                    symbol.add(DEFAULT_SYMBOL)
+                }
+            } else {
+                for (i in 0 until WINDOW_WIDTH) {
+                    symbol[i] = DEFAULT_SYMBOL
                 }
             }
-            return check
+            if (prevSymbol.isEmpty()) {
+                repeat(WINDOW_WIDTH) {
+                    prevSymbol.add(DEFAULT_SYMBOL)
+                }
+            }
         }
 
-        private fun charIsSymbol(lineInWindow: Int, i: Int): Boolean {
-            return window[lineInWindow][i] != DEFAULT_SYMBOL
-                    && !window[lineInWindow][i].isDigit()
+        private fun nextSymbol() {
+            pos++
+            for (i in 0 until WINDOW_WIDTH) {
+                prevSymbol[i] = symbol[i]
+                symbol[i] = window[i][pos]
+            }
         }
 
-        fun getPartNumbersSum(): Int {
-            return partNumbersSum
+        private fun checkSymbol() {
+            if (symbol[CURRENT_LINE_INDEX].isDigit()) {
+                numberInConstruction.add(symbol[CURRENT_LINE_INDEX])
+                if (!prevSymbol[CURRENT_LINE_INDEX].isDigit()) {
+                    checkFrontEdge()
+                } else {
+                    checkIntermediateEdge()
+                }
+                if (isLastPos()) {
+                    checkBackEdge()
+                    addNumber()
+                }
+            } else if (prevSymbol[CURRENT_LINE_INDEX].isDigit()) {
+                checkIntermediateEdge()
+                checkBackEdge()
+                addNumber()
+            }
+        }
+
+        private fun isLastPos(): Boolean {
+            return pos == (window[CURRENT_LINE_INDEX].length - 1)
+        }
+
+        private fun isSymbol(symbol: Char): Boolean {
+            return !symbol.isDigit() && symbol != DEFAULT_SYMBOL
+        }
+
+        private fun checkFrontEdge() {
+            adjacent = adjacent ||
+                    isSymbol(prevSymbol[UP_LINE_INDEX]) ||
+                    isSymbol(prevSymbol[CURRENT_LINE_INDEX]) ||
+                    isSymbol(prevSymbol[DOWN_LINE_INDEX])
+        }
+
+        private fun checkIntermediateEdge() {
+            adjacent = adjacent ||
+                    isSymbol(prevSymbol[UP_LINE_INDEX]) ||
+                    isSymbol(prevSymbol[DOWN_LINE_INDEX])
+        }
+
+        private fun checkBackEdge() {
+            adjacent = adjacent ||
+                    isSymbol(symbol[UP_LINE_INDEX]) ||
+                    isSymbol(symbol[CURRENT_LINE_INDEX]) ||
+                    isSymbol(symbol[DOWN_LINE_INDEX])
+        }
+
+        private fun addNumber() {
+            if (adjacent) {
+                val stringNumber = numberInConstruction.joinToString("")
+                println(stringNumber)
+                stringNumbers.add(stringNumber)
+                adjacent = false
+            }
+            numberInConstruction.clear()
+        }
+
+        fun sumNumbers(): Long {
+            return stringNumbers.fold(0L) { sum, value -> sum + value.toLong() }
         }
     }
 
-    fun count(): Int {
+    fun count(): Long {
         val path = MAIN_INPUT_PATH.format("Day3")
         return count(path)
     }
 
-    fun count(path: String): Int {
+    fun count(path: String): Long {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
@@ -117,13 +156,10 @@ object Day3 {
         while (scanner.hasNext()) {
             searchWindow.nextLine(scanner)
             searchWindow.findPartNumbers()
-            println()
         }
         searchWindow.lastLine()
         searchWindow.findPartNumbers()
-        println()
-        return searchWindow.getPartNumbersSum()
-        // 531823 wrong
+        return searchWindow.sumNumbers()
     }
 
 
