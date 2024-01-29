@@ -12,10 +12,11 @@ object Day3 {
     private const val CURRENT_LINE_INDEX = 1    // center
     private const val DOWN_LINE_INDEX = 2       // right
     private const val DEFAULT_POS = -1
+    private const val GEAR_COUNT = 2
 
     abstract class SearchWindow() {
         protected val window = LinkedList<String>()
-        protected var pos = DEFAULT_POS
+        protected var searchPos = DEFAULT_POS
 
         fun firstLine(scanner: Scanner) {
             val firstLine = scanner.nextLine()
@@ -44,7 +45,7 @@ object Day3 {
         }
 
         protected fun isLastPos(): Boolean {
-            return pos == (window[CURRENT_LINE_INDEX].length - 1)
+            return searchPos == (window[CURRENT_LINE_INDEX].length - 1)
         }
     }
 
@@ -64,7 +65,7 @@ object Day3 {
         }
 
         private fun setSymbolDefault() {
-            pos = DEFAULT_POS
+            searchPos = DEFAULT_POS
             if (symbol.isEmpty()) {
                 repeat(WINDOW_WIDTH) {
                     symbol.add(DEFAULT_SYMBOL)
@@ -82,10 +83,10 @@ object Day3 {
         }
 
         private fun nextSymbol() {
-            pos++
+            searchPos++
             for (i in 0 until WINDOW_WIDTH) {
                 prevSymbol[i] = symbol[i]
-                symbol[i] = window[i][pos]
+                symbol[i] = window[i][searchPos]
             }
         }
 
@@ -170,8 +171,6 @@ object Day3 {
     class GearsSearcher(): SearchWindow() {
         private val neighbourhood = defaultNeighbourhood()
         private var gearCount = 0
-        private var symbol = DEFAULT_SYMBOL
-        private var prevSymbol = DEFAULT_SYMBOL
         private val charNumber0 = LinkedList<Char>()
         private val charNumber1 = LinkedList<Char>()
         private val ratios = LinkedList<Long>()
@@ -192,6 +191,7 @@ object Day3 {
         }
 
         fun findGears() {
+            searchPos = DEFAULT_POS
             for (i in window[CURRENT_LINE_INDEX].indices) {
                 nextSymbol()
                 checkSymbol()
@@ -199,52 +199,95 @@ object Day3 {
         }
 
         private fun nextSymbol() {
-            pos++
+            searchPos++
             setNeighbourhood()
         }
 
         private fun setNeighbourhood() {
             for (i in 0 until WINDOW_WIDTH) {
-                if (pos == 0) {
+                if (searchPos == 0) {
                     neighbourhood[i][UP_LINE_INDEX] = DEFAULT_SYMBOL
                 } else {
-                    neighbourhood[i][UP_LINE_INDEX] = window[i][pos - 1]
+                    neighbourhood[i][UP_LINE_INDEX] = window[i][searchPos - 1]
                 }
-                neighbourhood[i][CURRENT_LINE_INDEX] = window[i][pos]
+                neighbourhood[i][CURRENT_LINE_INDEX] = window[i][searchPos]
                 if (isLastPos()) {
                     neighbourhood[i][DOWN_LINE_INDEX] = DEFAULT_SYMBOL
                 } else {
-                    neighbourhood[i][DOWN_LINE_INDEX] = window[i][pos + 1]
+                    neighbourhood[i][DOWN_LINE_INDEX] = window[i][searchPos + 1]
                 }
             }
         }
 
         private fun checkSymbol() {
+            /*
+            (up, up)        (up, current)       (up, down)
+            (current, up)   (current, current)  (current, down)
+            (down, up)      (down, current)     (down, down)
+
+            (current, current) - asterisk coordinates in neighbourhood
+             */
             if (isAsterisk()) {
                 val upLine = neighbourhood[UP_LINE_INDEX]
-
+                checkEdgeLine(upLine)
             }
         }
 
         private fun isAsterisk(): Boolean {
-            return window[CURRENT_LINE_INDEX][pos] == ASTERISK_SYMBOL
+            return window[CURRENT_LINE_INDEX][searchPos] == ASTERISK_SYMBOL
         }
 
-        private fun checkLine(line: ArrayList<Char>) {
+        private fun checkEdgeLine(line: ArrayList<Char>) {
             if (!line[CURRENT_LINE_INDEX].isDigit()) {
                 if (line[UP_LINE_INDEX].isDigit()) {
                     gearCount += 1
+
                 }
                 if (line[DOWN_LINE_INDEX].isDigit()) {
                     gearCount += 1
+
                 }
             } else {
                 gearCount += 1
+
             }
         }
 
+        private fun checkCenterLine(line: ArrayList<Char>) {
+            if (line[UP_LINE_INDEX].isDigit()) {
+                gearCount += 1
+
+            }
+            if (line[DOWN_LINE_INDEX].isDigit()) {
+                gearCount += 1
+
+            }
+        }
+
+        private fun findStartPosOfNum(index: Int, pos: Int): Int {
+            var iPos = pos
+            var iSymbol = window[index][iPos]
+            while (iSymbol.isDigit()) {
+                iPos--
+                iSymbol = window[index][iPos]
+            }
+            return iPos + 1
+        }
+
+        private fun saveNum(index: Int, startPos: Int) {
+            val charNumber = LinkedList<Char>()
+            var iPos = startPos
+            var iSymbol = window[index][iPos]
+            while (iSymbol.isDigit()) {
+                charNumber.add(iSymbol)
+                iPos++
+                iSymbol = window[index][iPos]
+            }
+
+        }
+
         private fun addRatio() {
-            if (isGear()) {
+            if (gearCount == GEAR_COUNT) {
                 val ratio = charNumber0.joinToString("").toLong() *
                         charNumber1.joinToString("").toLong()
                 println(ratio)
@@ -253,10 +296,6 @@ object Day3 {
             }
             charNumber0.clear()
             charNumber1.clear()
-        }
-
-        private fun isGear(): Boolean {
-            return gearCount == 2
         }
 
         fun sumRatios(): Long {
