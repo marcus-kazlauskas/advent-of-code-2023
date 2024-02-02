@@ -64,4 +64,52 @@ object Day6 {
         race.countNumOfWays()
         return race.multi()
     }
+
+    class RaceV2 {
+        private var race = Pair(0L, 0L)
+        var numberOfWays = 0L
+            private set
+
+        fun setData(scanner: Scanner) {
+            val rawLineOfTime = scanner.nextLine().split(Regex("Time:( )+"))
+            val stringTime = getLine(rawLineOfTime)
+            val time = stringTime.joinToString("").toLong()
+            val rawLineOfDistance = scanner.nextLine().split(Regex("Distance:( )+"))
+            val stringDistance = getLine(rawLineOfDistance)
+            val distance = stringDistance.joinToString("").toLong()
+            race = Pair(time, distance)
+            println(race)
+        }
+
+        private fun getLine(rawLine: List<String>): List<String> {
+            return rawLine[1].split(Regex("( )+"))
+        }
+
+        fun countNumOfWays() {
+            var charge = 0L
+            while (distance(charge) <= race.second) {
+                charge++
+            }
+            numberOfWays = race.first - 2 * charge + 1
+        }
+
+        private fun distance(charge: Long): Long {
+            return (race.first - charge) * charge
+        }
+    }
+
+    fun countV2(): Long {
+        val path = MAIN_INPUT_PATH.format("Day6")
+        return countV2(path)
+    }
+
+    fun countV2(path: String): Long {
+        val input = Path(path)
+        val file = File(input.toUri())
+        val scanner = Scanner(file)
+        val race = RaceV2()
+        race.setData(scanner)
+        race.countNumOfWays()
+        return race.numberOfWays
+    }
 }
