@@ -1,5 +1,6 @@
 import java.io.File
 import java.util.*
+import kotlin.collections.HashMap
 import kotlin.io.path.Path
 
 object Day10 {
@@ -18,7 +19,7 @@ object Day10 {
     private var start = DEFAULT_POINT
     private var prevPoint = DEFAULT_POINT
     private var point = DEFAULT_POINT
-
+    private val border = HashMap<Int, LinkedList<Int>>()
 
     fun count(): Int {
         val path = MAIN_INPUT_PATH.format("Day10")
@@ -56,7 +57,7 @@ object Day10 {
         prevPoint = start
         for (i in 0 until POINTS_AROUND) {
             /*
-            X 0 X
+            X 0 X   Вместо for и when стоило бы просто написать подряд 4 варианта
             3 S 1
             X 2 X
              */
@@ -65,7 +66,7 @@ object Day10 {
                     if (start.first != 0) {
                         val point = Pair(start.first - 1, start.second)
                         val pipe = getPipe(point)
-                        if (!listOf(
+                        if (!setOf(
                                 EW_PIPE,
                                 NE_PIPE,
                                 NW_PIPE,
@@ -80,7 +81,7 @@ object Day10 {
                     if (start.second != field[0].length - 1) {
                         val point = Pair(start.first, start.second + 1)
                         val pipe = getPipe(point)
-                        if (!listOf(
+                        if (!setOf(
                                 NS_PIPE,
                                 NE_PIPE,
                                 SE_PIPE,
@@ -95,7 +96,7 @@ object Day10 {
                     if (start.first != field[0].length - 1) {
                         val point = Pair(start.first + 1, start.second)
                         val pipe = getPipe(point)
-                        if (!listOf(
+                        if (!setOf(
                                 EW_PIPE,
                                 SW_PIPE,
                                 SE_PIPE,
@@ -110,7 +111,7 @@ object Day10 {
                     if (start.second != 0) {
                         val point = Pair(start.first, start.second - 1)
                         val pipe = getPipe(point)
-                        if (!listOf(
+                        if (!setOf(
                                 NS_PIPE,
                                 NW_PIPE,
                                 SW_PIPE,
@@ -123,6 +124,7 @@ object Day10 {
                 }
             }
         }
+        addToBorder(point)
     }
 
     private fun getPipe(point: Pair<Int, Int>): Char {
@@ -188,5 +190,108 @@ object Day10 {
                 }
             }
         }
+        addToBorder(point)
+    }
+
+    fun countV2(): Int {
+        val path = MAIN_INPUT_PATH.format("Day10")
+        return countV2(path)
+    }
+
+    fun countV2(path: String): Int {
+        val input = Path(path)
+        val file = File(input.toUri())
+        val scanner = Scanner(file)
+        setField(scanner)
+        firstStep()
+        while (getPipe(point) != START) {
+            nextStep()
+        }
+        return countSquare()
+    }
+
+    private fun addToBorder(point: Pair<Int, Int>) {
+        if (border.containsKey(point.first)) {
+            border[point.first]?.add(point.second)
+        } else {
+            val list = LinkedList<Int>()
+            list.add(point.second)
+            border[point.first] = list
+        }
+    }
+
+    private fun countSquare(): Int {
+        var square = 0
+        for (e in border.entries) {
+            val i = e.key
+            val slice = e.value
+            slice.sort()
+            square += checkSlices(i, slice)
+        }
+        return square
+    }
+
+    private fun checkSlices(i: Int, js: LinkedList<Int>): Int {
+        println("border[$i] = $js")
+        var sliceSum = 0
+        var borderCount = 0
+        var k = 0
+        var prevJ: Int
+        var j = js[0]
+        var startSlicePipe = getPipe(Pair(i, j))
+        if (startSlicePipe == NS_PIPE) {
+            borderCount++
+            startSlicePipe = GROUND
+        }
+        while (k < js.size - 1) {
+            k++
+            prevJ = j
+            j = js[k]
+            when (getPipe(Pair(i, j))) {
+                NS_PIPE     -> {
+                    if (startSlicePipe == START) {
+                        borderCount++
+                    }
+                    if (borderCount % 2 == 1) {
+                        sliceSum += j - prevJ - 1
+                    }
+                    borderCount++
+                }
+                NE_PIPE     -> {
+                    if (startSlicePipe == START) {
+                        borderCount++
+                    }
+                    if (borderCount % 2 == 1) {
+                        sliceSum += j - prevJ - 1
+                    }
+                    startSlicePipe = NE_PIPE
+                }
+                NW_PIPE     -> {
+                    if (startSlicePipe == SE_PIPE || startSlicePipe == START) {
+                        borderCount++
+                    }
+                    startSlicePipe = GROUND
+                }
+                SW_PIPE     -> {
+                    if (startSlicePipe == NE_PIPE || startSlicePipe == START) {
+                        borderCount++
+                    }
+                    startSlicePipe = GROUND
+                }
+                SE_PIPE     -> {
+                    if (startSlicePipe == START) {
+                        borderCount++
+                    }
+                    if (borderCount % 2 == 1) {
+                        sliceSum += j - prevJ - 1
+                    }
+                    startSlicePipe = SE_PIPE
+                }
+                START       -> {
+                    startSlicePipe = START
+                }
+            }
+        }
+        return sliceSum
     }
 }
