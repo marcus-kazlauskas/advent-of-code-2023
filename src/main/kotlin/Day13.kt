@@ -35,7 +35,11 @@ object Day13 {
 
         private fun findVertSym() {
             for (j in (0 until horizontalSize() / 2).reversed()) {
-                if (checkVertSymFromLeft(j) || checkVertSymFromRight(j)) {
+                if (checkVertSymFromLeft(j)) {
+                    verticalSymmetry = j + 1
+                    break
+                }
+                if (checkVertSymFromRight(j)) {
                     verticalSymmetry = horizontalSize() - (j + 1)
                     break
                 }
@@ -66,9 +70,11 @@ object Day13 {
 
         private fun findHorizonSym() {
             for (i in (0 until verticalSize() / 2).reversed()) {
-                // ебучие индексы блять
-                // и ремонт ещё этот
-                if (checkHorizonSymFromUp(i) || checkHorizonSymFromDown(i)) {
+                if (checkHorizonSymFromUp(i)) {
+                    horizontalSymmetry = i + 1
+                    break
+                }
+                if (checkHorizonSymFromDown(i)) {
                     horizontalSymmetry = verticalSize() - (i + 1)
                     break
                 }
@@ -125,6 +131,5 @@ object Day13 {
         pattern.set(scanner)
         pattern.findSymmetry()
         return pattern.getCount()
-        // 60457 too high
     }
 }
