@@ -182,6 +182,7 @@ object Day14 {
             return load
         }
 
+        @Suppress("unused")
         fun set(platform: Platform) {
             if (panel.isEmpty()) {
                 for (i in 0 until platform.panel.size) {
@@ -255,7 +256,7 @@ object Day14 {
         var currentLoad = platform.load()
         val hashCodeList = LinkedList<Int>()
         var currentHashCode = platform.hashCode()
-        while (!hashCodeList.contains(currentHashCode) && (cycle < 20)) {
+        while (!hashCodeList.contains(currentHashCode) && (cycle < MAX_CYCLE)) {
             loadList.add(currentLoad)
             hashCodeList.add(currentHashCode)
             // cycle start
@@ -271,9 +272,7 @@ object Day14 {
         }
         loadList.add(currentLoad)
         hashCodeList.add(currentHashCode)
-//        println(hashCodeList)
         return loadAfterMaxCycle(loadList, hashCodeList)
-        // 95053 too high
     }
 
     private fun loadAfterMaxCycle(loadList: LinkedList<Int>, hashCodeList: LinkedList<Int>): Int {
@@ -289,7 +288,6 @@ object Day14 {
             loadList.last
         } else {
             val loadPos = (MAX_CYCLE - startLoopPos) % (maxPos - startLoopPos) + startLoopPos
-//            println("$startLoopPos $maxPos $loadPos")
             loadList[loadPos]
         }
     }
