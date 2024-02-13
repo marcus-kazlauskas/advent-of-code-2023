@@ -47,7 +47,7 @@ object Day16 {
             through(0, 0, 1)
         }
 
-        private fun through(i: Int, j: Int, direction: Int) {  // это ужасно...
+        fun through(i: Int, j: Int, direction: Int) {  // это ужасно...
             when (direction) {
                 0 -> {
                     when (layout[i][j].tile) {
@@ -309,7 +309,11 @@ object Day16 {
         }
 
         private fun isNotLastRow(i: Int): Boolean {
-            return i < (layout.size - 1)
+            return i < lastRow()
+        }
+
+        fun lastRow(): Int {
+            return layout.size - 1
         }
 
         private fun isNotFirstColumn(j: Int): Boolean {
@@ -317,7 +321,11 @@ object Day16 {
         }
 
         private fun isNotLastColumn(j: Int): Boolean {
-            return j < (layout[0].size - 1)
+            return j < lastColumn()
+        }
+
+        fun lastColumn(): Int {
+            return layout[0].size - 1
         }
 
         private fun isNotOneMoreBeam(i: Int, j: Int, direction: Int): Boolean {
@@ -371,6 +379,23 @@ object Day16 {
                 println()
             }
         }
+
+        fun getCopy(): Contraption {
+            val contraption = Contraption()
+            for (l in layout) {
+                val line = LinkedList<Tile>()
+                for (t in l) {
+                    val direction = HashSet<Int>()
+                    for (d in t.direction) {
+                        direction.add(d)
+                    }
+                    val tile = Tile(direction, t.tile)
+                    line.add(tile)
+                }
+                contraption.layout.add(line)
+            }
+            return contraption
+        }
     }
 
     fun count(): Int {
@@ -389,5 +414,59 @@ object Day16 {
 //        println()
 //        contraption.printBean()
         return contraption.countEnergized()
+    }
+
+    fun countV2(): Int {
+        val path = MAIN_INPUT_PATH.format("Day16")
+        return countV2(path)
+    }
+
+    fun countV2(path: String): Int {
+        val input = Path(path)
+        val file = File(input.toUri())
+        val scanner = Scanner(file)
+        val contraption = Contraption()
+        contraption.set(scanner)
+        return maxEnergized(contraption)
+        // на 928-м вызове произошло переполнение стека
+    }
+
+    private fun maxEnergized(contraption: Contraption): Int {
+        var maxEnergized = 0
+        var currentEnergized: Int
+        var copy = contraption
+        for (i in 0..(copy.lastRow())) {
+            copy = contraption.getCopy()
+            copy.through(i, 0, 1)
+            currentEnergized = copy.countEnergized()
+            if (currentEnergized > maxEnergized) {
+                maxEnergized = currentEnergized
+                println("i = $i, left edge; energy = $maxEnergized")
+            }
+            copy = contraption.getCopy()
+            copy.through(i, copy.lastColumn(), 3)
+            currentEnergized = copy.countEnergized()
+            if (currentEnergized > maxEnergized) {
+                maxEnergized = currentEnergized
+                println("i = $i, right edge; energy = $maxEnergized")
+            }
+        }
+        for (j in 0..(copy.lastColumn())) {
+            copy = contraption.getCopy()
+            copy.through(0, j, 2)
+            currentEnergized = copy.countEnergized()
+            if (currentEnergized > maxEnergized) {
+                maxEnergized = currentEnergized
+                println("j = $j, up edge; energy = $maxEnergized")
+            }
+            copy = contraption.getCopy()
+            copy.through(copy.lastRow(), j, 0)
+            currentEnergized = copy.countEnergized()
+            if (currentEnergized > maxEnergized) {
+                maxEnergized = currentEnergized
+                println("j = $j, down edge; energy = $maxEnergized")
+            }
+        }
+        return maxEnergized
     }
 }
