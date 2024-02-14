@@ -30,6 +30,7 @@ object Day16 {
         }
 
         private val layout = LinkedList<LinkedList<Tile>>()
+        private val beam = LinkedList<Triple<Int, Int, Int>>()
 
         fun set(scanner: Scanner) {
             while (scanner.hasNext()) {
@@ -43,11 +44,22 @@ object Day16 {
             }
         }
 
-        fun through() {
-            through(0, 0, 1)
+        fun computeBeam(i: Int, j: Int, direction: Int) {
+            through(i, j, direction)
+            computeBeam()
         }
 
-        fun through(i: Int, j: Int, direction: Int) {  // это ужасно...
+        private fun computeBeam() {
+            while (beam.isNotEmpty()) {
+                val triple = beam.poll()
+                val i = triple.first
+                val j = triple.second
+                val direction = triple.third
+                through(i, j, direction)
+            }
+        }
+
+        private fun through(i: Int, j: Int, direction: Int) {  // это ужасно...
             when (direction) {
                 0 -> {
                     when (layout[i][j].tile) {
@@ -61,7 +73,7 @@ object Day16 {
                                 . ^ . .
                                 . . . .
                                  */
-                                    through(i, j + 1, 1)
+                                    beam.add(Triple(i, j + 1, 1))
                                 }
                             }
                         }
@@ -75,7 +87,7 @@ object Day16 {
                                 . . ^ .
                                 . . . .
                                  */
-                                    through(i, j - 1, 3)
+                                    beam.add(Triple(i, j - 1, 3))
                                 }
                             }
                         }
@@ -89,7 +101,7 @@ object Day16 {
                                 . . ^ .
                                 . . . .
                                  */
-                                    through(i, j - 1, 3)
+                                    beam.add(Triple(i, j - 1, 3))
                                 }
                                 if (isNotLastColumn(j)) {
                                     /*
@@ -98,7 +110,7 @@ object Day16 {
                                 . ^ . .
                                 . . . .
                                  */
-                                    through(i, j + 1, 1)
+                                    beam.add(Triple(i, j + 1, 1))
                                 }
                             }
                         }
@@ -106,7 +118,7 @@ object Day16 {
                             if (isNotOneMoreBeam(i, j, direction)) {
                                 addBeam(i, j, direction)
                                 if (isNotFirstRow(i)) {
-                                    through(i - 1, j, 0)
+                                    beam.add(Triple(i - 1, j, 0))
                                 }
                             }
                         }
@@ -124,7 +136,7 @@ object Day16 {
                                 . > / .
                                 . . . .
                                  */
-                                    through(i - 1, j, 0)
+                                    beam.add(Triple(i - 1, j, 0))
                                 }
                             }
                         }
@@ -138,7 +150,7 @@ object Day16 {
                                 . . v .
                                 . . . .
                                  */
-                                    through(i + 1, j, 2)
+                                    beam.add(Triple(i + 1, j, 2))
                                 }
                             }
                         }
@@ -152,7 +164,7 @@ object Day16 {
                                 . > | .
                                 . . . .
                                  */
-                                    through(i - 1, j, 0)
+                                    beam.add(Triple(i - 1, j, 0))
                                 }
                                 if (isNotLastRow(i)) {
                                     /*
@@ -161,7 +173,7 @@ object Day16 {
                                 . . v .
                                 . . . .
                                  */
-                                    through(i + 1, j, 2)
+                                    beam.add(Triple(i + 1, j, 2))
                                 }
                             }
                         }
@@ -169,7 +181,7 @@ object Day16 {
                             if (isNotOneMoreBeam(i, j, direction)) {
                                 addBeam(i, j, direction)
                                 if (isNotLastColumn(j)) {
-                                    through(i, j + 1, 1)
+                                    beam.add(Triple(i, j + 1, 1))
                                 }
                             }
                         }
@@ -187,7 +199,7 @@ object Day16 {
                                 . < / .
                                 . . . .
                                  */
-                                    through(i, j - 1, 3)
+                                    beam.add(Triple(i, j - 1, 3))
                                 }
                             }
                         }
@@ -201,7 +213,7 @@ object Day16 {
                                 . \ > .
                                 . . . .
                                  */
-                                    through(i, j + 1, 1)
+                                    beam.add(Triple(i, j + 1, 1))
                                 }
                             }
                         }
@@ -215,7 +227,7 @@ object Day16 {
                                 . < - .
                                 . . . .
                                  */
-                                    through(i, j - 1, 3)
+                                    beam.add(Triple(i, j - 1, 3))
                                 }
                                 if (isNotLastColumn(j)) {
                                     /*
@@ -224,7 +236,7 @@ object Day16 {
                                 . - > .
                                 . . . .
                                  */
-                                    through(i, j + 1, 1)
+                                    beam.add(Triple(i, j + 1, 1))
                                 }
                             }
                         }
@@ -232,7 +244,7 @@ object Day16 {
                             if (isNotOneMoreBeam(i, j, direction)) {
                                 addBeam(i, j, direction)
                                 if (isNotLastRow(i)) {
-                                    through(i + 1, j, 2)
+                                    beam.add(Triple(i + 1, j, 2))
                                 }
                             }
                         }
@@ -250,7 +262,7 @@ object Day16 {
                                 . v . .
                                 . . . .
                                  */
-                                    through(i + 1, j, 2)
+                                    beam.add(Triple(i + 1, j, 2))
                                 }
                             }
                         }
@@ -264,7 +276,7 @@ object Day16 {
                                 . \ < .
                                 . . . .
                                  */
-                                    through(i - 1, j, 0)
+                                    beam.add(Triple(i - 1, j, 0))
                                 }
                             }
                         }
@@ -278,7 +290,7 @@ object Day16 {
                                 . v . .
                                 . . . .
                                  */
-                                    through(i + 1, j, 2)
+                                    beam.add(Triple(i + 1, j, 2))
                                 }
                                 if (isNotFirstRow(i)) {
                                     /*
@@ -287,7 +299,7 @@ object Day16 {
                                 . | < .
                                 . . . .
                                  */
-                                    through(i - 1, j, 0)
+                                    beam.add(Triple(i - 1, j, 0))
                                 }
                             }
                         }
@@ -295,7 +307,7 @@ object Day16 {
                             if (isNotOneMoreBeam(i, j, direction)) {
                                 addBeam(i, j, direction)
                                 if (isNotFirstColumn(j)) {
-                                    through(i, j - 1, 3)
+                                    beam.add(Triple(i, j - 1, 3))
                                 }
                             }
                         }
@@ -409,7 +421,7 @@ object Day16 {
         val scanner = Scanner(file)
         val contraption = Contraption()
         contraption.set(scanner)
-        contraption.through()
+        contraption.computeBeam(0, 0, 1)
         contraption.printEnergized()
 //        println()
 //        contraption.printBean()
@@ -437,14 +449,14 @@ object Day16 {
         var copy = contraption
         for (i in 0..(copy.lastRow())) {
             copy = contraption.getCopy()
-            copy.through(i, 0, 1)
+            copy.computeBeam(i, 0, 1)
             currentEnergized = copy.countEnergized()
             if (currentEnergized > maxEnergized) {
                 maxEnergized = currentEnergized
                 println("i = $i, left edge; energy = $maxEnergized")
             }
             copy = contraption.getCopy()
-            copy.through(i, copy.lastColumn(), 3)
+            copy.computeBeam(i, copy.lastColumn(), 3)
             currentEnergized = copy.countEnergized()
             if (currentEnergized > maxEnergized) {
                 maxEnergized = currentEnergized
@@ -453,14 +465,14 @@ object Day16 {
         }
         for (j in 0..(copy.lastColumn())) {
             copy = contraption.getCopy()
-            copy.through(0, j, 2)
+            copy.computeBeam(0, j, 2)
             currentEnergized = copy.countEnergized()
             if (currentEnergized > maxEnergized) {
                 maxEnergized = currentEnergized
                 println("j = $j, up edge; energy = $maxEnergized")
             }
             copy = contraption.getCopy()
-            copy.through(copy.lastRow(), j, 0)
+            copy.computeBeam(copy.lastRow(), j, 0)
             currentEnergized = copy.countEnergized()
             if (currentEnergized > maxEnergized) {
                 maxEnergized = currentEnergized
