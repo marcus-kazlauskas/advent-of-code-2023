@@ -440,7 +440,6 @@ object Day16 {
         val contraption = Contraption()
         contraption.set(scanner)
         return maxEnergized(contraption)
-        // на 928-м вызове произошло переполнение стека
     }
 
     private fun maxEnergized(contraption: Contraption): Int {
