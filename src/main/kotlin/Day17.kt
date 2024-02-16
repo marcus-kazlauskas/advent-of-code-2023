@@ -5,6 +5,8 @@ import kotlin.io.path.Path
 object Day17 {
     const val VALUE = 1090
 
+    // класс узла дерева шагов
+
     private class Map {
         val map = LinkedList<List<Int>>()
 
