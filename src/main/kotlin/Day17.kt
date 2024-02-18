@@ -5,18 +5,164 @@ import kotlin.io.path.Path
 object Day17 {
     const val VALUE = 1090
 
-    // класс узла дерева шагов
+    private enum class Direction {
+        START,
+        UP,
+        RIGHT,
+        DOWN,
+        LEFT
+    }
+
+    private class Step(
+        val direction: EnumMap<Direction, Int>,
+        val loss: Int
+    )
 
     private class Map {
-        val map = LinkedList<List<Int>>()
+        val map = ArrayList<List<Step>>()
+        val ways = LinkedList<Triple<Int, Int, Direction>>()
+
+        private companion object {
+            const val MIN_STEP = 1
+            const val MAX_STEP = 3
+        }
 
         fun set (scanner: Scanner) {
             while (scanner.hasNext()) {
                 val line = scanner.nextLine()
                     .toCharArray()
-                    .map { c -> c.code }
+                    .map { c -> Step(EnumMap(Direction::class.java), c.toString().toInt()) }
                 map.add(line)
             }
+//            map[0][0].direction[Direction.START] = 0
+        }
+
+        fun computeWays() {
+            next(0, 0, Direction.START)
+            while (ways.isNotEmpty()) {
+                val way = ways.poll()
+                println("way = $way, map[12][12].direction = ${map[12][12].direction}")
+                val i = way.first
+                val j = way.second
+                val direction = way.third
+                if (i < maxRowPos() || j < maxColumnPos()) {
+                    next(i, j, direction)
+                }
+            }
+        }
+
+        private fun next(i: Int, j: Int, direction: Direction) {
+            when (direction) {
+                Direction.START -> {
+                    for (delta in MIN_STEP..MAX_STEP) {
+                        // rightward direction
+                        val jStart = j + 1
+                        val jEnd = j + delta
+                        if (jEnd <= maxColumnPos()) {
+                            var loss = getLoss(i, j, Direction.START)
+                            for (jStep in jStart..jEnd) {
+                                loss += map[i][jStep].loss
+                            }
+                            if (setWay(i, jEnd, Direction.RIGHT, loss)) {
+                                ways.add(Triple(i, jEnd, Direction.RIGHT))
+                            }
+                        }
+                        // downward direction
+                        val iStart = i + 1
+                        val iEnd = i + delta
+                        if (iEnd <= maxRowPos()) {
+                            var loss = getLoss(i, j, Direction.START)
+                            for (iStep in iStart..iEnd) {
+                                loss += map[iStep][j].loss
+                            }
+                            if (setWay(iEnd, j, Direction.DOWN, loss)) {
+                                ways.add(Triple(iEnd, j, Direction.DOWN))
+                            }
+                        }
+                    }
+                }
+                Direction.UP, Direction.DOWN -> {
+                    for (delta in MIN_STEP..MAX_STEP) {
+                        // rightward direction
+                        var jStart = j + 1
+                        var jEnd = j + delta
+                        if (jEnd <= maxColumnPos()) {
+                            var loss = getLoss(i, j, direction)
+                            for (jStep in jStart..jEnd) {
+                                loss += map[i][jStep].loss
+                            }
+                            if (setWay(i, jEnd, Direction.RIGHT, loss)) {
+                                ways.add(Triple(i, jEnd, Direction.RIGHT))
+                            }
+                        }
+                        // leftward direction
+                        jStart = j - 1
+                        jEnd = j - delta
+                        if (jEnd >= 0) {
+                            var loss = getLoss(i, j, Direction.UP)
+                            for (jStep in jStart downTo jEnd) {
+                                loss += map[i][jStep].loss
+                            }
+                            if (setWay(i, jEnd, Direction.LEFT, loss)) {
+                                ways.add(Triple(i, jEnd, Direction.LEFT))
+                            }
+                        }
+                    }
+                }
+                Direction.RIGHT, Direction.LEFT -> {
+                    for (delta in MIN_STEP..MAX_STEP) {
+                        // upward direction
+                        var iStart = i - 1
+                        var iEnd = i - delta
+                        if (iEnd >= 0) {
+                            var loss = getLoss(i, j, direction)
+                            for (iStep in iStart downTo iEnd) {
+                                loss += map[iStep][j].loss
+                            }
+                            if (setWay(iEnd, j, Direction.UP, loss)) {
+                                ways.add(Triple(iEnd, j, Direction.UP))
+                            }
+                        }
+                        // downward direction
+                        iStart = i + 1
+                        iEnd = i + delta
+                        if (iEnd <= maxRowPos()) {
+                            var loss = getLoss(i, j , Direction.RIGHT)
+                            for (iStep in iStart..iEnd) {
+                                loss += map[iStep][j].loss
+                            }
+                            if (setWay(iEnd, j, Direction.DOWN, loss)) {
+                                ways.add(Triple(iEnd, j, Direction.DOWN))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun maxColumnPos(): Int {
+            return map[0].size - 1
+        }
+
+        private fun maxRowPos(): Int {
+            return map.size - 1
+        }
+
+        private fun getLoss(i: Int, j: Int, direction: Direction): Int {
+            return map[i][j].direction.getOrDefault(direction, 0)
+        }
+
+        private fun setWay(i: Int, j: Int, direction: Direction, loss: Int): Boolean {
+            val oldLoss = map[i][j].direction.getOrDefault(direction, Int.MAX_VALUE)
+            return if (loss < oldLoss) {
+                map[i][j].direction[direction] = loss
+                true
+            } else false
+        }
+
+        fun leastHeatLoss(): Int {
+            val finish = map[maxRowPos()][maxColumnPos()]
+            return finish.direction.values.min()
         }
     }
 
@@ -31,6 +177,7 @@ object Day17 {
         val scanner = Scanner(file)
         val map = Map()
         map.set(scanner)
-        return 0
+        map.computeWays()
+        return map.leastHeatLoss()
     }
 }
