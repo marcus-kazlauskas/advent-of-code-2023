@@ -18,14 +18,12 @@ object Day17 {
         val loss: Int
     )
 
-    private class Map {
+    private class Map(
+        val minStepsNum: Int,
+        val maxStepsNum: Int
+    ) {
         val map = ArrayList<List<Step>>()
         val ways = LinkedList<Triple<Int, Int, Direction>>()
-
-        private companion object {
-            const val MIN_STEP = 1
-            const val MAX_STEP = 3
-        }
 
         fun set (scanner: Scanner) {
             while (scanner.hasNext()) {
@@ -52,7 +50,7 @@ object Day17 {
         private fun next(i: Int, j: Int, direction: Direction) {
             when (direction) {
                 Direction.START -> {
-                    for (delta in MIN_STEP..MAX_STEP) {
+                    for (delta in minStepsNum..maxStepsNum) {
                         // rightward direction
                         val jStart = j + 1
                         val jEnd = j + delta
@@ -80,7 +78,7 @@ object Day17 {
                     }
                 }
                 Direction.UP, Direction.DOWN -> {
-                    for (delta in MIN_STEP..MAX_STEP) {
+                    for (delta in minStepsNum..maxStepsNum) {
                         // rightward direction
                         var jStart = j + 1
                         var jEnd = j + delta
@@ -108,7 +106,7 @@ object Day17 {
                     }
                 }
                 Direction.RIGHT, Direction.LEFT -> {
-                    for (delta in MIN_STEP..MAX_STEP) {
+                    for (delta in minStepsNum..maxStepsNum) {
                         // upward direction
                         var iStart = i - 1
                         var iEnd = i - delta
@@ -172,12 +170,25 @@ object Day17 {
     }
 
     fun count(path: String): Int {
+        return countLeastHeatLoss(path, 1, 3)
+    }
+
+    private fun countLeastHeatLoss(path: String, minStepsCount: Int, maxStepsCount: Int): Int {
         val input = Path(path)
         val file = File(input.toUri())
         val scanner = Scanner(file)
-        val map = Map()
+        val map = Map(minStepsCount, maxStepsCount)
         map.set(scanner)
         map.computeWays()
         return map.leastHeatLoss()
+    }
+
+    fun countV2(): Int {
+        val path = MAIN_INPUT_PATH.format("Day17")
+        return countV2(path)
+    }
+
+    fun countV2(path: String): Int {
+        return countLeastHeatLoss(path, 4, 10)
     }
 }
