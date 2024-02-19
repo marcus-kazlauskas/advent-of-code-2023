@@ -34,14 +34,12 @@ object Day17 {
                     .map { c -> Step(EnumMap(Direction::class.java), c.toString().toInt()) }
                 map.add(line)
             }
-//            map[0][0].direction[Direction.START] = 0
         }
 
         fun computeWays() {
             next(0, 0, Direction.START)
             while (ways.isNotEmpty()) {
                 val way = ways.poll()
-                println("way = $way, map[12][12].direction = ${map[12][12].direction}")
                 val i = way.first
                 val j = way.second
                 val direction = way.third
@@ -99,7 +97,7 @@ object Day17 {
                         jStart = j - 1
                         jEnd = j - delta
                         if (jEnd >= 0) {
-                            var loss = getLoss(i, j, Direction.UP)
+                            var loss = getLoss(i, j, direction)
                             for (jStep in jStart downTo jEnd) {
                                 loss += map[i][jStep].loss
                             }
@@ -127,7 +125,7 @@ object Day17 {
                         iStart = i + 1
                         iEnd = i + delta
                         if (iEnd <= maxRowPos()) {
-                            var loss = getLoss(i, j , Direction.RIGHT)
+                            var loss = getLoss(i, j , direction)
                             for (iStep in iStart..iEnd) {
                                 loss += map[iStep][j].loss
                             }
@@ -149,12 +147,14 @@ object Day17 {
         }
 
         private fun getLoss(i: Int, j: Int, direction: Direction): Int {
+//            println("startLoss[$i][$j].$direction found? ${map[i][j].direction.contains(direction)}")
             return map[i][j].direction.getOrDefault(direction, 0)
         }
 
         private fun setWay(i: Int, j: Int, direction: Direction, loss: Int): Boolean {
             val oldLoss = map[i][j].direction.getOrDefault(direction, Int.MAX_VALUE)
             return if (loss < oldLoss) {
+//                println("loss < (endLoss[$i][$j].$direction = oldLoss), $loss < $oldLoss")
                 map[i][j].direction[direction] = loss
                 true
             } else false
