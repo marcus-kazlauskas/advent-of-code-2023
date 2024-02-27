@@ -72,7 +72,7 @@ object Day18 {
 //                println(Hole(0, direction, color))
                 input.add(Triple(direction, distance, color))
             }
-            input.add(input.first)
+            input.add(input.first())
         }
 
         fun buildPlan() {
@@ -84,7 +84,7 @@ object Day18 {
                 val direction = value.first
                 val distance = value.second
                 val color = value.third
-                val directionNext = input.first.first
+                val directionNext = input.first().first
                 when (direction) {
                     UP -> {
                         val iStart = iCurrent - 1
@@ -156,53 +156,43 @@ object Day18 {
         fun square(): Int {
             var countSquare = 0
             for (e in plan.entries) {
-//                var countLine = 0
                 val line = e.value
                 line.sort()
                 println("${e.key}) $line")
-                var countBorder = 0
+                var countBorder = 1
                 val jEnd = line.size - 1
                 var holePrev = line[0]
+                var isBorder = setOf(Border.UP_CORNER, Border.DOWN_CORNER).contains(holePrev.direction)
                 for (j in 1..jEnd) {
                     val hole = line[j]
                     when (setOf(holePrev.direction, hole.direction)) {
-                        setOf(Border.UP_CORNER, Border.DOWN_CORNER) -> {
-                            if (countBorder % 2 == 1) {
-                                countSquare += hole.j - holePrev.j - 1
-                            } else {
-                                countSquare += hole.j - holePrev.j + 1
-                            }
-                            holePrev = hole
-                        }
                         setOf(Border.UP_CORNER),
                         setOf(Border.DOWN_CORNER) -> {
-                            if (countBorder % 2 == 1) {
+                            if (countBorder % 2 == 1 && !isBorder) {
                                 countSquare += hole.j - holePrev.j - 1
+                                countBorder++
+                            } else if (isBorder) {
+                                isBorder = false
                             } else {
-                                countSquare += hole.j - holePrev.j + 1
                                 countBorder++
                             }
                             holePrev = hole
                         }
+
                         setOf(Border.UP_CORNER, Border.VERTICAL),
-                        setOf(Border.DOWN_CORNER, Border.VERTICAL) -> {
-                            if (countBorder % 2 == 1) {
-                                countSquare += hole.j - holePrev.j
-                            }
-                            countBorder++
-                            holePrev = hole
-                        }
+                        setOf(Border.DOWN_CORNER, Border.VERTICAL),
                         setOf(Border.VERTICAL) -> {
-                            if ((countBorder + 1) % 2 == 1) {
-                                countSquare += hole.j - holePrev.j + 1
+                            if (countBorder % 2 == 1) {
+                                countSquare += hole.j - holePrev.j - 1
                             }
                             countBorder++
                             holePrev = hole
                         }
                     }
-//                    holePrev = hole
-                    println("square = $countSquare, countBorder = $countBorder")
                 }
+//                    println("square = $countSquare, countBorder = $countBorder")
+                countSquare += line.size
+                println("square = $countSquare, countBorder = $countBorder")
             }
             return countSquare
         }
@@ -222,4 +212,5 @@ object Day18 {
         lagoon.buildPlan()
         return lagoon.square()
     }
+    // 44037 too low
 }
