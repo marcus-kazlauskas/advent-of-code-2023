@@ -1,67 +1,34 @@
 import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.io.path.Path
+import kotlin.math.abs
 
 object Day18 {
     const val VALUE = 1121
+    private const val UP = "U"
+    private const val RIGHT = "R"
+    private const val DOWN = "D"
+    private const val LEFT = "L"
+    private const val NE_CORNER = 'L'
+    private const val NW_CORNER = 'J'
+    private const val SW_CORNER = '7'
+    private const val SE_CORNER = 'F'
 
-    private enum class Border {
-        HORIZONTAL,
-        VERTICAL,
-        UP_CORNER,
-        DOWN_CORNER,
-        UNKNOWN
-    }
-
-    private class Hole(val j: Int, val direction: Border, val color: String): Comparable<Hole> {
-        override fun compareTo(other: Hole): Int {
-            return j.compareTo(other.j)
-        }
-
+    private class Corner(
+        val i: Int,
+        val j: Int,
+        val corner: Char,
+        val clockwise: Boolean,
+        val color: String
+    ) {
         override fun toString(): String {
-            return "[$j - $direction - (#$color)]"
+            return "[($i, $j) - ($corner, clockwise=$clockwise) - (#$color)]"
         }
     }
 
     private class Lagoon {
-        private companion object {
-            const val UP = "U"
-            const val RIGHT = "R"
-            const val DOWN = "D"
-            const val LEFT = "L"
-
-            fun createHole(j: Int, direction: String, color: String): Hole {
-                return when (direction) {
-                    UP, DOWN -> {
-                        Hole(j, Border.VERTICAL, color)
-                    }
-                    RIGHT, LEFT -> {
-                        Hole(j, Border.HORIZONTAL, color)
-                    }
-                    else -> {
-                        Hole(j, Border.UNKNOWN, color)
-                    }
-                }
-            }
-
-            fun createCornerHole(j: Int, direction: String, directionNext: String, color: String): Hole {
-                return when (setOf(direction, directionNext)) {
-                    setOf(RIGHT, DOWN), setOf(LEFT, UP) -> {
-                        Hole(j, Border.DOWN_CORNER, color)
-                    }
-                    setOf(DOWN, LEFT), setOf(UP, RIGHT) -> {
-                        Hole(j, Border.UP_CORNER, color)
-                    }
-                    else -> {
-                        Hole(j, Border.UNKNOWN, color)
-                    }
-                }
-            }
-        }
-
         val input = LinkedList<Triple<String, Int, String>>()
-        val plan = HashMap<Int, LinkedList<Hole>>()
+        val border = LinkedList<Corner>()
 
         fun set(scanner: Scanner) {
             while (scanner.hasNext()) {
@@ -69,132 +36,172 @@ object Day18 {
                 val direction = line[0]
                 val distance = line[1].toInt()
                 val color = (line[2].split(Regex("(\\(#)|(\\))")))[1]
-//                println(Hole(0, direction, color))
                 input.add(Triple(direction, distance, color))
             }
             input.add(input.first())
         }
 
-        fun buildPlan() {
-            val lastPos = input.size - 2
+        fun buildBorder() {
+            border.clear()
             var iCurrent = 0
             var jCurrent = 0
-            for (k in 0..lastPos) {
-                val value = input.poll()
-                val direction = value.first
-                val distance = value.second
-                val color = value.third
-                val directionNext = input.first().first
+            for (k in 1 until input.size) {
+                val section = input[k]
+                val direction = section.first
+                val distance = section.second
+                val color = section.third
+                val sectionPrev = input[k - 1]
+                val directionPrev = sectionPrev.first
+                val distancePrev = sectionPrev.second
+                val colorPrev = sectionPrev.third
                 when (direction) {
                     UP -> {
-                        val iStart = iCurrent - 1
-                        val iEnd = iCurrent - distance
-                        for (i in iStart downTo iEnd) {
-                            if (i != iEnd) {
-                                val hole = createHole(jCurrent, direction, color)
-                                add(i, hole)
-                            } else {
-                                val cornerHole = createCornerHole(jCurrent, direction, directionNext, color)
-                                add(i, cornerHole)
+                        when (directionPrev) {
+                            RIGHT -> {
+                                iCurrent += distancePrev
+                                val corner = Corner(iCurrent, jCurrent, NW_CORNER, false, colorPrev)
+                                border.add(corner)
+                            }
+                            LEFT -> {
+                                iCurrent -= distancePrev
+                                val corner = Corner(iCurrent, jCurrent, NE_CORNER, true, colorPrev)
+                                border.add(corner)
                             }
                         }
-                        iCurrent = iEnd
                     }
                     RIGHT -> {
-                        val jStart = jCurrent + 1
-                        val jEnd = jCurrent + distance
-                        for (j in jStart..jEnd) {
-                            if (j != jEnd) {
-                                val hole = createHole(j, direction, color)
-                                add(iCurrent, hole)
-                            } else {
-                                val cornerHole = createCornerHole(j, direction, directionNext, color)
-                                add(iCurrent, cornerHole)
+                        when (directionPrev) {
+                            UP -> {
+                                jCurrent -= distancePrev
+                                val corner = Corner(iCurrent, jCurrent, SE_CORNER, true, colorPrev)
+                                border.add(corner)
+                            }
+                            DOWN -> {
+                                jCurrent += distancePrev
+                                val corner = Corner(iCurrent, jCurrent, NE_CORNER, false, colorPrev)
+                                border.add(corner)
                             }
                         }
-                        jCurrent = jEnd
                     }
                     DOWN -> {
-                        val iStart = iCurrent + 1
-                        val iEnd = iCurrent + distance
-                        for (i in iStart..iEnd) {
-                            if (i != iEnd) {
-                                val hole = createHole(jCurrent, direction, color)
-                                add(i, hole)
-                            } else {
-                                val cornerHole = createCornerHole(jCurrent, direction, directionNext, color)
-                                add(i, cornerHole)
+                        when (directionPrev) {
+                            RIGHT -> {
+                                iCurrent += distancePrev
+                                val corner = Corner(iCurrent, jCurrent, SW_CORNER, true, colorPrev)
+                                border.add(corner)
+                            }
+                            LEFT -> {
+                                iCurrent -= distancePrev
+                                val corner = Corner(iCurrent, jCurrent, SE_CORNER, false, colorPrev)
+                                border.add(corner)
                             }
                         }
-                        iCurrent = iEnd
                     }
                     LEFT -> {
-                        val jStart = jCurrent - 1
-                        val jEnd = jCurrent - distance
-                        for (j in jStart downTo jEnd) {
-                            if (j != jEnd) {
-                                val hole = createHole(j, direction, color)
-                                add(iCurrent, hole)
-                            } else {
-                                val cornerHole = createCornerHole(j, direction, directionNext, color)
-                                add(iCurrent, cornerHole)
+                        when (directionPrev) {
+                            UP -> {
+                                jCurrent -= distancePrev
+                                val corner = Corner(iCurrent, jCurrent, SW_CORNER, false, colorPrev)
+                                border.add(corner)
+                            }
+                            DOWN -> {
+                                jCurrent += distancePrev
+                                val corner = Corner(iCurrent, jCurrent, NW_CORNER, true, colorPrev)
+                                border.add(corner)
                             }
                         }
-                        jCurrent = jEnd
                     }
                 }
             }
         }
 
-        private fun add(i: Int, hole: Hole) {
-            if (!plan.contains(i)) {
-                plan[i] = LinkedList<Hole>()
+        fun closeCavity() {
+            var cavityFound = true
+            while (cavityFound) {
+                cavityFound = false
+                for (k in 0 until border.size) {
+                    for (l in 0 until k) {
+                        val kCorner = border[k]
+                        val lCorner = border[l]
+                        when (kCorner.corner) {
+                            NE_CORNER -> {
+                                when (lCorner.corner) {
+                                    NE_CORNER -> {
+
+                                    }
+                                    NW_CORNER -> {
+
+                                    }
+                                    SW_CORNER -> {
+
+                                    }
+                                    SE_CORNER -> {
+
+                                    }
+                                }
+                            }
+                            NW_CORNER -> {
+                                when (lCorner.corner) {
+                                    NE_CORNER -> {
+
+                                    }
+                                    NW_CORNER -> {
+
+                                    }
+                                    SW_CORNER -> {
+
+                                    }
+                                    SE_CORNER -> {
+
+                                    }
+                                }
+                            }
+                            SW_CORNER -> {
+                                when (lCorner.corner) {
+                                    NE_CORNER -> {
+
+                                    }
+                                    NW_CORNER -> {
+
+                                    }
+                                    SW_CORNER -> {
+
+                                    }
+                                    SE_CORNER -> {
+
+                                    }
+                                }
+                            }
+                            SE_CORNER -> {
+                                when (lCorner.corner) {
+                                    NE_CORNER -> {
+
+                                    }
+                                    NW_CORNER -> {
+
+                                    }
+                                    SW_CORNER -> {
+
+                                    }
+                                    SE_CORNER -> {
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            plan[i]?.add(hole)
+        }
+
+        private fun isAdjacent(k: Int, l: Int): Boolean {
+            val kCorner = border[k]
+            val lCorner = border[l]
+            return abs(kCorner.i - lCorner.i) <= 1 && abs(kCorner.j - lCorner.j) <= 1
         }
 
         fun square(): Int {
-            var countSquare = 0
-            for (e in plan.entries) {
-                val line = e.value
-                line.sort()
-                println("${e.key}) $line")
-                var countBorder = 1
-                val jEnd = line.size - 1
-                var holePrev = line[0]
-                var isBorder = setOf(Border.UP_CORNER, Border.DOWN_CORNER).contains(holePrev.direction)
-                for (j in 1..jEnd) {
-                    val hole = line[j]
-                    when (setOf(holePrev.direction, hole.direction)) {
-                        setOf(Border.UP_CORNER),
-                        setOf(Border.DOWN_CORNER) -> {
-                            if (countBorder % 2 == 1 && !isBorder) {
-                                countSquare += hole.j - holePrev.j - 1
-                                countBorder++
-                            } else if (isBorder) {
-                                isBorder = false
-                            } else {
-                                countBorder++
-                            }
-                            holePrev = hole
-                        }
-
-                        setOf(Border.UP_CORNER, Border.VERTICAL),
-                        setOf(Border.DOWN_CORNER, Border.VERTICAL),
-                        setOf(Border.VERTICAL) -> {
-                            if (countBorder % 2 == 1) {
-                                countSquare += hole.j - holePrev.j - 1
-                            }
-                            countBorder++
-                            holePrev = hole
-                        }
-                    }
-                }
-//                    println("square = $countSquare, countBorder = $countBorder")
-                countSquare += line.size
-                println("square = $countSquare, countBorder = $countBorder")
-            }
-            return countSquare
+            return 0
         }
     }
 
@@ -209,8 +216,8 @@ object Day18 {
         val scanner = Scanner(file)
         val lagoon = Lagoon()
         lagoon.set(scanner)
-        lagoon.buildPlan()
+        lagoon.buildBorder()
+        lagoon.closeCavity()
         return lagoon.square()
     }
-    // 44037 too low
 }
