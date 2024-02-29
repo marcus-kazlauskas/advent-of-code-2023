@@ -4,6 +4,12 @@ import kotlin.io.path.Path
 import kotlin.math.abs
 
 object Day18 {
+    /*
+    Решение задачи похоже на алгоритм игры Xonix.
+    Я заебался искать все возможные случаи заполнение пустот внутри границы.
+    В последующие дни идут ещё более сложные задачи.
+    На этом решение AoC 2023 завершается:-(((
+     */
     const val VALUE = 1121
     private const val UP = "U"
     private const val RIGHT = "R"
@@ -48,8 +54,6 @@ object Day18 {
             for (k in 1 until input.size) {
                 val section = input[k]
                 val direction = section.first
-                val distance = section.second
-                val color = section.third
                 val sectionPrev = input[k - 1]
                 val directionPrev = sectionPrev.first
                 val distancePrev = sectionPrev.second
@@ -121,73 +125,8 @@ object Day18 {
                 cavityFound = false
                 for (k in 0 until border.size) {
                     for (l in 0 until k) {
-                        val kCorner = border[k]
-                        val lCorner = border[l]
-                        when (kCorner.corner) {
-                            NE_CORNER -> {
-                                when (lCorner.corner) {
-                                    NE_CORNER -> {
-
-                                    }
-                                    NW_CORNER -> {
-
-                                    }
-                                    SW_CORNER -> {
-
-                                    }
-                                    SE_CORNER -> {
-
-                                    }
-                                }
-                            }
-                            NW_CORNER -> {
-                                when (lCorner.corner) {
-                                    NE_CORNER -> {
-
-                                    }
-                                    NW_CORNER -> {
-
-                                    }
-                                    SW_CORNER -> {
-
-                                    }
-                                    SE_CORNER -> {
-
-                                    }
-                                }
-                            }
-                            SW_CORNER -> {
-                                when (lCorner.corner) {
-                                    NE_CORNER -> {
-
-                                    }
-                                    NW_CORNER -> {
-
-                                    }
-                                    SW_CORNER -> {
-
-                                    }
-                                    SE_CORNER -> {
-
-                                    }
-                                }
-                            }
-                            SE_CORNER -> {
-                                when (lCorner.corner) {
-                                    NE_CORNER -> {
-
-                                    }
-                                    NW_CORNER -> {
-
-                                    }
-                                    SW_CORNER -> {
-
-                                    }
-                                    SE_CORNER -> {
-
-                                    }
-                                }
-                            }
+                        if (isAdjacent(k, l)) {
+                            replaceCorners(k, l)
                         }
                     }
                 }
@@ -197,10 +136,39 @@ object Day18 {
         private fun isAdjacent(k: Int, l: Int): Boolean {
             val kCorner = border[k]
             val lCorner = border[l]
-            return abs(kCorner.i - lCorner.i) <= 1 && abs(kCorner.j - lCorner.j) <= 1
+            return abs(kCorner.i - lCorner.i) == 1 || abs(kCorner.j - lCorner.j) == 1
+        }
+
+        private fun replaceCorners(k: Int, l: Int) {
+            val kCorner = border[k]
+            val lCorner = border[l]
+            /* TODO
+            Тут должен быть свитч, в котором в зависимости от kCorner и lCorner,
+            завершающего и открывающего полость углов, считая по направлению обхода границы,
+            граница вокруг пустоты заменятся на перемычку, с учётом того что в границе
+            сохранены только угловые элементы, а прямые подразумеваются между ними.
+            Например:
+
+            ---7 F->                 ---7 F->
+            ..FJ |.                  ..FJ |.
+            ..|  |.                  ..|  |.
+            ..|F-J.                  ..L--J.
+            ..||...  превращается в  .......
+            .FJL7..                  .......
+            .|  |..                  .......
+            .L--J..                  .......
+            .......                  .......
+
+            > -- направление обхода границы
+            . -- область внутри границы
+            <space> -- область за пределами границы
+             */
         }
 
         fun square(): Int {
+            /* TODO
+            Тут должен быть алгоритм интегрирования фигуры по угловым точкам
+             */
             return 0
         }
     }
